@@ -234,9 +234,15 @@ export async function enrichJobs(db: Db, rows: JobRow[]): Promise<PublicJob[]> {
  * Apply the live-job predicate (published + not expired + active org).
  * `any` is deliberate here: the filter is built dynamically and each chained
  * call returns a differently-shaped builder type.
+ *
+ * NOTE: this MUST stay synchronous and MUST never be awaited. PostgREST
+ * filter builders are thenables, so `await`ing a builder (or an async
+ * function that returns one) silently executes the query and resolves to
+ * the result object — breaking any further chaining with
+ * "d.order is not a function". Fetch async inputs (org ids) first, then
+ * apply this synchronously.
  */
-async function applyLivePredicate(db: Db, query: any): Promise<any> {
-  const activeOrgIds = await getActiveOrgIds(db);
+function applyLivePredicate(query: any, activeOrgIds: string[]): any {
   let q = query
     .eq("status", "published")
     .or("deadline.is.null,deadline.gt.now");
@@ -263,8 +269,11 @@ export async function searchJobs(
 
   async function run(useFullText: boolean) {
     // `any`: the filter chain is built dynamically; see applyLivePredicate.
+    // Fetch async inputs BEFORE touching the builder, and never await the
+    // builder itself (it is a thenable — awaiting executes the query).
+    const activeOrgIds = await getActiveOrgIds(db);
     let query: any = db.from("jobs").select(JOB_LIST_COLUMNS, { count: "exact" });
-    query = await applyLivePredicate(db, query);
+    query = applyLivePredicate(query, activeOrgIds);
 
     if (keyword) {
       if (useFullText) {
@@ -484,14 +493,16 @@ export interface LiveJobCounts {
 
 /** One minimal-column query over live jobs; counts derived server-side. */
 export async function getLiveJobCounts(db: Db): Promise<LiveJobCounts> {
-  let query = db
-    .from("jobs")
-    .select("id, org_id, category_id, location_id, employment_type, workplace, is_fresh_graduate_ok", {
-      count: "exact",
-    })
-    .eq("status", "published")
-    .or("deadline.is.null,deadline.gt.now");
-  query = await applyLivePredicate(db, query);
+  // Never await the builder itself (it is a thenable — awaiting executes it).
+  const activeOrgIds = await getActiveOrgIds(db);
+  let query = applyLivePredicate(
+    db
+      .from("jobs")
+      .select("id, org_id, category_id, location_id, employment_type, workplace, is_fresh_graduate_ok", {
+        count: "exact",
+      }),
+    activeOrgIds,
+  );
 
   const { data, count, error } = await query;
   if (error) throw new Error(`Failed to count jobs: ${error.message}`);
