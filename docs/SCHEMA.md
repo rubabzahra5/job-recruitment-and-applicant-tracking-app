@@ -1,8 +1,9 @@
 # Database Schema Overview
 
-Migrations: `supabase/migrations/0001_identity.sql` → `0009_seed.sql`.
+Migrations: `supabase/migrations/0001_identity.sql` → `0010_contact_messages.sql`.
 All primary keys are UUIDs (`gen_random_uuid()`); all timestamps are
-`timestamptz` (UTC); every private table has RLS enabled.
+`timestamptz` (UTC); every private table has RLS enabled (45 tables as of
+`0007_rls.sql` + `0010`).
 
 ## Identity (0001)
 
@@ -78,3 +79,11 @@ read; writes restricted to org admins of the org folder).
 13 job categories, 13 Pakistani cities, the 13-stage pipeline with 27 allowed
 transitions, and platform defaults (`operating_mode='centralized'`,
 `currency='PKR'`, `timezone='Asia/Karachi'`, …). Idempotent.
+
+## Contact messages (0010)
+
+`contact_messages` (uuid PK, name, email, subject, message, `created_at`,
+`is_read` default false). RLS enabled: anon + authenticated users get
+INSERT-only; super_admins get full access. Written by the public `/contact`
+form's server action, which also best-effort notifies super admins in-app
+via `lib/notifications.ts`. No email is claimed sent.

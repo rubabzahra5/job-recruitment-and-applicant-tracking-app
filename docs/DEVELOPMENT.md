@@ -15,7 +15,7 @@ npm run dev            # http://localhost:3000
 
 ## Database
 
-Migrations live in `supabase/migrations/` and are versioned `0001_…` → `0009_…`.
+Migrations live in `supabase/migrations/` and are versioned `0001_…` → `0010_…`.
 Apply them in order with the Supabase CLI (`supabase db push`) or the SQL editor.
 
 To validate them locally without Supabase:
@@ -78,3 +78,12 @@ moves.
 | ------ | ----- |
 | `npm run bootstrap-admin` | One-time super-admin grant. Typed email confirmation required. Refuses if a super admin exists (unless `--force` + typed confirmation). Disable/remove after use. |
 | `npm run seed` | Fictional dev dataset. Requires `SEED_CONFIRM=yes`. Never auto-runs. |
+
+## Further reading
+
+- `docs/deployment.md` — production deployment, step by step
+- `docs/architecture.md` — system overview (routes, RBAC, RLS, settings map)
+- `docs/email-setup.md` — Supabase Auth emails + optional Resend; the honest unconfigured behavior
+- `docs/compliance-pk.md` — launch checklist for qualified Pakistani legal/HR counsel (not a compliance claim)
+- `docs/free-tier-limits.md` — current Supabase/Vercel/GitHub free quotas and migration paths
+- `docs/SCHEMA.md` — database schema overview
