@@ -14,7 +14,20 @@ export default defineConfig({
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        // Allow environments without downloaded Playwright browsers to point
+        // at a system Chromium, e.g. PLAYWRIGHT_CHROMIUM_PATH=/usr/bin/chromium
+        launchOptions: process.env.PLAYWRIGHT_CHROMIUM_PATH
+          ? {
+              executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH,
+              // System Chromium builds may enforce Local Network Access checks
+              // that block navigation to a local dev server; disable them for
+              // local e2e runs only.
+              args: ["--disable-features=LocalNetworkAccessChecks"],
+            }
+          : undefined,
+      },
     },
   ],
   webServer: process.env.E2E_BASE_URL

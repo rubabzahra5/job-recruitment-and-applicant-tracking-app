@@ -75,7 +75,16 @@ functional checks).
 **Tests** — `tests/`: 51 tests, 6 files (phone, format, csv, uploads,
 pipeline, UI render). **All pass** (`npx vitest run`).
 **E2E** — `e2e/smoke.spec.ts` (homepage, auth redirects, 404). Playwright
-browsers: [E2E STATUS — see below].
+browsers could not be downloaded in this sandbox (CDN download failure), and the
+only available Chromium (`/opt/meta-chromium/chrome`, v152) enforces Local
+Network Access checks that block navigation to loopback servers
+(`ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS`) with no working disable flag.
+The 3 specs were executed and failed on this environmental issue — not on app
+behavior. Every assertion in the spec was instead verified against the running
+production server with curl: `/` → 200 with the expected heading;
+`/candidate`, `/employer`, `/control-center` → 307 to `/login?next=…`;
+unknown path → 404 "Page not found". `playwright.config.ts` supports
+`PLAYWRIGHT_CHROMIUM_PATH` for environments with a system Chromium.
 
 **Docs** — `README.md`, `docs/DEVELOPMENT.md`, `docs/SCHEMA.md`, `.env.example`.
 
@@ -119,7 +128,10 @@ await requireSuperAdmin(user.id); // control-center only
 - No Supabase credentials exist in this environment — nothing was run against a
   real Supabase project (auth, storage, realtime untested). First integration
   test should be manual against a dev project.
-- E2E: [E2E STATUS — see below].
+- E2E: the 3 Playwright specs were executed but could not pass in this sandbox
+  (browser download blocked; system Chromium blocks loopback navigation — see
+  above). Their assertions were verified via curl instead. Re-run
+  `npm run test:e2e` in an environment with working Playwright browsers.
 - `scripts/bootstrap-admin.ts` and `scripts/seed.ts` were type-checked but not
   executed (no live Supabase).
 - Email sending not tested (no `RESEND_API_KEY`); the unconfigured path is
