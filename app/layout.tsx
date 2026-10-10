@@ -3,11 +3,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "HirePakistan — Jobs & Hiring in Pakistan",
-    template: "%s · HirePakistan",
+    default: "Job Recruitment And Applicant Tracking System — Jobs & Hiring in Pakistan",
+    template: "%s · Job Recruitment And Applicant Tracking System",
   },
   description:
-    "HirePakistan is a job recruitment and applicant tracking platform for Pakistan.",
+    "Job Recruitment And Applicant Tracking System is a job recruitment and applicant tracking platform for Pakistan.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

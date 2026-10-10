@@ -1,6 +1,6 @@
-# HirePakistan — Module C: Employer / HR Portal (Agent C)
+# Job Recruitment And Applicant Tracking System — Module C: Employer / HR Portal (Agent C)
 
-Date: 2026-10-10. Workspace: `/home/hatch/workspace/hire-pakistan`.
+Date: 2026-10-10. Workspace: `/home/hatch/workspace/job-recruitment-and-applicant-tracking-system`.
 
 Complete employer portal under `app/(employer)/` plus the invitation-acceptance
 route `app/(public)/invite/[token]/`. Shared server helpers live in

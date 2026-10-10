@@ -116,7 +116,7 @@ export async function inviteMember(orgId: string, input: InviteInput): Promise<I
     const url = inviteUrlFor(token);
     const emailResult = await sendEmail({
       to: email,
-      subject: `You're invited to join ${org?.name ?? "an organization"} on HirePakistan`,
+      subject: `You're invited to join ${org?.name ?? "an organization"} on Job Recruitment And Applicant Tracking System`,
       html: `<p>You've been invited to join <strong>${org?.name ?? "an organization"}</strong> as <strong>${parsed.role.replace("_", " ")}</strong>.</p><p><a href="${url}">Accept the invitation</a> (expires in ${parsed.expiresInDays} days).</p>`,
       text: `You've been invited to join ${org?.name ?? "an organization"} as ${parsed.role.replace("_", " ")}. Accept here: ${url} (expires in ${parsed.expiresInDays} days).`,
     });
@@ -162,7 +162,7 @@ export async function resendInvitation(orgId: string, invitationId: string): Pro
     const orgName = singleRow(invitation.organizations as { name: string } | { name: string }[] | null)?.name ?? "an organization";
     const emailResult = await sendEmail({
       to: invitation.email as string,
-      subject: `Reminder: you're invited to join ${orgName} on HirePakistan`,
+      subject: `Reminder: you're invited to join ${orgName} on Job Recruitment And Applicant Tracking System`,
       html: `<p>This is a reminder of your invitation to join <strong>${orgName}</strong> as <strong>${(invitation.role as string).replace("_", " ")}</strong>.</p><p><a href="${url}">Accept the invitation</a> (expires in 7 days).</p>`,
       text: `Reminder: you're invited to join ${orgName} as ${(invitation.role as string).replace("_", " ")}. Accept here: ${url} (expires in 7 days).`,
     });

@@ -26,7 +26,7 @@ export default async function EmployeeDocumentsPage({ searchParams }: { searchPa
   return (
     <main>
       <h1 className="text-2xl font-bold">My documents</h1>
-      <p className="mt-1 text-sm text-slate-500">Documents you have uploaded to HirePakistan (e.g. your CV).</p>
+      <p className="mt-1 text-sm text-slate-500">Documents you have uploaded to Job Recruitment And Applicant Tracking System (e.g. your CV).</p>
       <div className="mt-4">
         <EmployeeSubNav orgId={ctx.orgId} current="/documents" />
       </div>

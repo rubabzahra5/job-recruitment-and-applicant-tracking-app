@@ -137,7 +137,7 @@ export const SETTING_SPECS: SettingSpec[] = [
 ];
 
 export const DEFAULTS: Record<string, unknown> = {
-  platform_name: "HirePakistan",
+  platform_name: "Job Recruitment And Applicant Tracking System",
   operating_mode: "centralized",
   currency: "PKR",
   timezone: "Asia/Karachi",

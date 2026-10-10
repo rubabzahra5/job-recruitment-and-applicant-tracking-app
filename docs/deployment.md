@@ -1,6 +1,6 @@
 # Deployment Guide
 
-Beginner-friendly, step by step, for someone deploying HirePakistan for the
+Beginner-friendly, step by step, for someone deploying Job Recruitment And Applicant Tracking System for the
 first time. Assumes you have a GitHub account, a Supabase account, and a
 Vercel account (all free tiers are enough to start; see
 `docs/free-tier-limits.md`).
@@ -23,8 +23,8 @@ Vercel account (all free tiers are enough to start; see
 
 ```bash
 git add .
-git commit -m "Initial HirePakistan deploy"
-git remote add origin git@github.com:<you>/hire-pakistan.git
+git commit -m "Initial Job Recruitment And Applicant Tracking System deploy"
+git remote add origin git@github.com:<you>/job-recruitment-and-applicant-tracking-system.git
 git push -u origin main
 ```
 
@@ -45,9 +45,9 @@ dashboard (service-role key) — don't try to "fix" history alone.
 
 In the Supabase dashboard, go to **Authentication → URL Configuration**:
 
-- **Site URL:** your production URL (e.g. `https://hire-pakistan.vercel.app`).
+- **Site URL:** your production URL (e.g. `https://job-recruitment-and-applicant-tracking-system.vercel.app`).
 - **Redirect URLs (allowlist):** add your production URL, e.g.
-  `https://hire-pakistan.vercel.app/**`, plus `http://localhost:3000/**` if
+  `https://job-recruitment-and-applicant-tracking-system.vercel.app/**`, plus `http://localhost:3000/**` if
   you also develop locally against this project.
 
 The reset-password flow (`/reset-password`, which exchanges the emailed
@@ -120,7 +120,7 @@ Preview/Development):
 | `NEXT_PUBLIC_SUPABASE_URL` | yes | Public; safe in browser |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes | Public; safe in browser |
 | `SUPABASE_SERVICE_ROLE_KEY` | yes | **Server-only.** Never add `NEXT_PUBLIC_` prefix. `lib/supabase/admin.ts` imports `server-only` so bundling it client-side fails the build. |
-| `NEXT_PUBLIC_APP_URL` | yes | Production URL, e.g. `https://hire-pakistan.vercel.app`. Used for email links/redirects. |
+| `NEXT_PUBLIC_APP_URL` | yes | Production URL, e.g. `https://job-recruitment-and-applicant-tracking-system.vercel.app`. Used for email links/redirects. |
 | `BOOTSTRAP_ADMIN_EMAIL` | bootstrap only | Used by `npm run bootstrap-admin`. |
 | `RESEND_API_KEY` | optional | Without it, app emails never send (honest `sent:false` behavior — see `docs/email-setup.md`). |
 | `EMAIL_FROM_ADDRESS` | optional | Sender address, e.g. `noreply@yourdomain.com`. |

@@ -296,7 +296,7 @@ export async function GET(request: Request) {
     return new NextResponse(csv, {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="hirepakistan-${spec.filename}-${stamp}.csv"`,
+        "Content-Disposition": `attachment; filename="job-recruitment-and-applicant-tracking-system-${spec.filename}-${stamp}.csv"`,
       },
     });
   } catch (e) {

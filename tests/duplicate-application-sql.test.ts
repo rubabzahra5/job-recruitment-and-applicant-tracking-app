@@ -112,14 +112,14 @@ describe.skipIf(!canRun)("duplicate application — SQL-level partial unique ind
       execFileSync("bash", [
         "-c",
         `install -d -o postgres -g postgres -m 700 '${qdir}' '${migStage}' && ` +
-          `cp /home/hatch/workspace/hire-pakistan/supabase/migrations/*.sql '${migStage}/' && ` +
+          `cp /home/hatch/workspace/job-recruitment-and-applicant-tracking-system/supabase/migrations/*.sql '${migStage}/' && ` +
           `chown postgres:postgres '${migStage}'/*.sql`,
       ]);
     } else {
       execFileSync("bash", [
         "-c",
         `mkdir -p '${qdir}' '${migStage}' && ` +
-          `cp /home/hatch/workspace/hire-pakistan/supabase/migrations/*.sql '${migStage}/'`,
+          `cp /home/hatch/workspace/job-recruitment-and-applicant-tracking-system/supabase/migrations/*.sql '${migStage}/'`,
       ]);
     }
 

@@ -314,8 +314,8 @@ export async function sendOffer(orgId: string, offerId: string): Promise<OfferAc
       const result = await sendEmail({
         to,
         subject: `Job offer: ${offer.applications.jobs?.title ?? "a position"}`,
-        html: `<p>You have received a job offer for <strong>${offer.applications.jobs?.title ?? "a position"}</strong>.</p><p>Compensation: ${salaryText}.</p><p>Sign in to HirePakistan to review and respond.</p>`,
-        text: `You have received a job offer for ${offer.applications.jobs?.title ?? "a position"}. Compensation: ${salaryText}. Sign in to HirePakistan to review and respond.`,
+        html: `<p>You have received a job offer for <strong>${offer.applications.jobs?.title ?? "a position"}</strong>.</p><p>Compensation: ${salaryText}.</p><p>Sign in to Job Recruitment And Applicant Tracking System to review and respond.</p>`,
+        text: `You have received a job offer for ${offer.applications.jobs?.title ?? "a position"}. Compensation: ${salaryText}. Sign in to Job Recruitment And Applicant Tracking System to review and respond.`,
       });
       email = emailSummary(result);
     } else {

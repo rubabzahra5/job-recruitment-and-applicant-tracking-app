@@ -5,24 +5,24 @@ import { Card } from "@/components/ui/Card";
 
 export const metadata: Metadata = {
   title: "About Us",
-  description: "HirePakistan is a job recruitment and applicant tracking platform built for Pakistan's workforce.",
+  description: "Job Recruitment And Applicant Tracking System is a job recruitment and applicant tracking platform built for Pakistan's workforce.",
 };
 
 export default function AboutPage() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-12">
-      <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">About HirePakistan</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">About Job Recruitment And Applicant Tracking System</h1>
 
       <div className="prose-slate mt-6 space-y-5 text-slate-700 leading-relaxed">
         <p>
-          HirePakistan is a job recruitment and applicant tracking platform built
+          Job Recruitment And Applicant Tracking System is a job recruitment and applicant tracking platform built
           for Pakistan. We connect job seekers with employers across the
           country — from Karachi&apos;s tech corridors to Lahore&apos;s
           factories, Islamabad&apos;s public sector, and the growing startup
           scenes in Peshawar, Quetta, and beyond.
         </p>
         <p>
-          For candidates, HirePakistan is a free job board: search live
+          For candidates, Job Recruitment And Applicant Tracking System is a free job board: search live
           vacancies by keyword, city, category, salary, and workplace, save
           roles you like, and apply with a structured application that puts
           your best foot forward. Fresh graduates get a dedicated space —
@@ -30,7 +30,7 @@ export default function AboutPage() {
           candidates for.
         </p>
         <p>
-          For employers, HirePakistan is a complete applicant tracking system:
+          For employers, Job Recruitment And Applicant Tracking System is a complete applicant tracking system:
           publish vacancies, collect structured applications with screening
           questions, move candidates through a transparent hiring pipeline,
           schedule interviews, and make offers — all in one place, with an

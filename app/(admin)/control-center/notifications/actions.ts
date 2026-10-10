@@ -128,7 +128,7 @@ export async function retryDelivery(payload: Record<string, string>): Promise<Ac
 
     const result = await sendEmail({
       to,
-      subject: notification.title ?? "HirePakistan notification",
+      subject: notification.title ?? "Job Recruitment And Applicant Tracking System notification",
       html: `<p>${(notification.body ?? "").replace(/</g, "&lt;")}</p>`,
       text: notification.body ?? undefined,
     });

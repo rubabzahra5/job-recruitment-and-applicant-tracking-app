@@ -1,6 +1,6 @@
-# HirePakistan — Foundation Summary (Phase 1)
+# Job Recruitment And Applicant Tracking System — Foundation Summary (Phase 1)
 
-Date: 2026-10-10. Workspace: `/home/hatch/workspace/hire-pakistan`.
+Date: 2026-10-10. Workspace: `/home/hatch/workspace/job-recruitment-and-applicant-tracking-system`.
 
 ## Pinned versions (exact, verified installed)
 

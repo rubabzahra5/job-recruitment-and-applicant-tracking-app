@@ -5,7 +5,7 @@ import { ForgotPasswordForm } from "../_components/ForgotPasswordForm";
 
 export const metadata: Metadata = {
   title: "Forgot Password",
-  description: "Reset your HirePakistan password.",
+  description: "Reset your Job Recruitment And Applicant Tracking System password.",
 };
 
 export default function ForgotPasswordPage() {

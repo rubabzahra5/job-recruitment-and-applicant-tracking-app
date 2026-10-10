@@ -1,6 +1,6 @@
-# HirePakistan — Module B: Candidate Portal (Agent B)
+# Job Recruitment And Applicant Tracking System — Module B: Candidate Portal (Agent B)
 
-Date: 2026-10-10. Workspace: `/home/hatch/workspace/hire-pakistan`.
+Date: 2026-10-10. Workspace: `/home/hatch/workspace/job-recruitment-and-applicant-tracking-system`.
 
 Complete candidate portal under `app/(candidate)/`. All pages and server
 actions enforce `requireCandidate()` (see `app/(candidate)/_lib/candidate-guard.ts`):

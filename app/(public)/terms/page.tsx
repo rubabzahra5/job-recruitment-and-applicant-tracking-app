@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Terms of Use",
-  description: "The terms governing your use of the HirePakistan platform.",
+  description: "The terms governing your use of the Job Recruitment And Applicant Tracking System platform.",
 };
 
 function H2({ children }: { children: React.ReactNode }) {
@@ -21,14 +21,14 @@ export default function TermsPage() {
       <p className="mt-2 text-sm text-slate-500">Last updated: 10 October 2026</p>
 
       <P>
-        These terms govern your use of HirePakistan, a job recruitment and
+        These terms govern your use of Job Recruitment And Applicant Tracking System, a job recruitment and
         applicant tracking platform for Pakistan. By creating an account or
         using the platform, you agree to these terms.
       </P>
 
       <H2>1. The service</H2>
       <P>
-        HirePakistan provides (a) a public job board where candidates can
+        Job Recruitment And Applicant Tracking System provides (a) a public job board where candidates can
         search and apply for vacancies, and (b) recruitment tools for
         employers, including vacancy publishing, application tracking,
         interview scheduling, and offer management. We may add, change, or
@@ -64,7 +64,7 @@ export default function TermsPage() {
         postings). By submitting it, you grant us the license needed to
         operate the platform — for example, to display your vacancy publicly
         or share your application with the employer you applied to. The
-        HirePakistan name, logo, and platform software remain our property.
+        Job Recruitment And Applicant Tracking System name, logo, and platform software remain our property.
       </P>
 
       <H2>6. Job listings are not offers</H2>
@@ -95,7 +95,7 @@ export default function TermsPage() {
 
       <H2>9. Limitation of liability</H2>
       <P>
-        To the maximum extent permitted by law, HirePakistan is provided
+        To the maximum extent permitted by law, Job Recruitment And Applicant Tracking System is provided
         “as is” without warranties. We are not liable for hiring decisions
         made by employers, the accuracy of user-submitted content, or indirect
         losses arising from your use of the platform. Nothing in these terms

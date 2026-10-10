@@ -57,7 +57,7 @@ export function AddMemberDialog({ orgId, orgName }: { orgId: string; orgName: st
             htmlFor="member-email"
             required
             error={errors.email?.message}
-            hint="The user must already have a HirePakistan account."
+            hint="The user must already have a Job Recruitment And Applicant Tracking System account."
           >
             <Input id="member-email" type="email" invalid={!!errors.email} {...register("email")} />
           </FormField>

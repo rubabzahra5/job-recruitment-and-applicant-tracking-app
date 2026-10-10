@@ -31,7 +31,7 @@ export async function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4">
-        <Link href="/" className="flex items-center gap-2" aria-label="HirePakistan home">
+        <Link href="/" className="flex items-center gap-2" aria-label="Job Recruitment And Applicant Tracking System home">
           <span
             aria-hidden="true"
             className="flex h-9 w-9 items-center justify-center rounded-md bg-brand-900 text-lg font-extrabold text-white"

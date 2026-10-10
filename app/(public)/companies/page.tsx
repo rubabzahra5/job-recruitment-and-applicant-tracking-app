@@ -24,7 +24,7 @@ export default async function CompaniesPage() {
       <p className="mt-1 text-slate-600">
         {orgs.length === 0
           ? "Verified employer profiles are on their way."
-          : `${orgs.length} verified ${orgs.length === 1 ? "employer" : "employers"} on HirePakistan.`}
+          : `${orgs.length} verified ${orgs.length === 1 ? "employer" : "employers"} on Job Recruitment And Applicant Tracking System.`}
       </p>
 
       {orgs.length > 0 ? (

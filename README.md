@@ -1,8 +1,8 @@
-# HirePakistan
+# Job Recruitment And Applicant Tracking System
 
 Job recruitment + applicant tracking system (ATS) for Pakistan.
 
-**Brand note:** "HirePakistan" is a *temporary, configurable* product name. The
+**Brand note:** "Job Recruitment And Applicant Tracking System" is a *temporary, configurable* product name. The
 platform brand is a runtime setting (`platform_settings.platform_name`,
 editable in the control center under Settings) and should be renamed before
 any public launch.

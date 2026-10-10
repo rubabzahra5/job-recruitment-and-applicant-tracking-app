@@ -7,7 +7,7 @@ import { ResetPasswordForm } from "../_components/ResetPasswordForm";
 
 export const metadata: Metadata = {
   title: "Reset Password",
-  description: "Choose a new password for your HirePakistan account.",
+  description: "Choose a new password for your Job Recruitment And Applicant Tracking System account.",
 };
 
 type SearchParams = Record<string, string | string[] | undefined>;

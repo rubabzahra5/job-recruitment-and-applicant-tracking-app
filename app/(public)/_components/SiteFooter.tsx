@@ -76,7 +76,7 @@ export function SiteFooter() {
       </div>
       <div className="border-t border-white/10">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-5 text-xs text-slate-400 sm:flex-row">
-          <p>© 2026 HirePakistan. All rights reserved.</p>
+          <p>© 2026 Job Recruitment And Applicant Tracking System. All rights reserved.</p>
           <p>Built for Pakistan&apos;s workforce · All amounts in PKR</p>
         </div>
       </div>

@@ -1,6 +1,6 @@
 # Architecture
 
-System overview of HirePakistan as built (Oct 2026). This describes what
+System overview of Job Recruitment And Applicant Tracking System as built (Oct 2026). This describes what
 the code actually does — for what was *not* yet verified against live
 services, see the README.
 

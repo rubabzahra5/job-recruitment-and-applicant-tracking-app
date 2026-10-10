@@ -27,7 +27,7 @@ export default function EmployerLayout({ children }: { children: React.ReactNode
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4">
           <div className="flex items-center">
             <Link href="/employer" className="text-lg font-bold text-brand-700">
-              HirePakistan
+              Job Recruitment And Applicant Tracking System
             </Link>
             <span className="ml-3 rounded bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
               Employer

@@ -9,7 +9,7 @@ import { getDashboardPath, safeNextPath } from "../_lib/dashboard";
 
 export const metadata: Metadata = {
   title: "Log In",
-  description: "Log in to your HirePakistan account.",
+  description: "Log in to your Job Recruitment And Applicant Tracking System account.",
 };
 
 type SearchParams = Record<string, string | string[] | undefined>;
@@ -38,7 +38,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   return (
     <main className="mx-auto max-w-md px-4 py-12">
       <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Welcome back</h1>
-      <p className="mt-1 text-slate-600">Log in to continue to HirePakistan.</p>
+      <p className="mt-1 text-slate-600">Log in to continue to Job Recruitment And Applicant Tracking System.</p>
 
       <Card className="mt-6 p-6">
         {message === "password-updated" && (

@@ -36,7 +36,7 @@ This alone rules out the free tier for anything user-facing in production.
 services return errors (reported as HTTP 402) until you upgrade or the
 billing period resets.
 
-**What this means for HirePakistan:** 500 MB database and 1 GB storage are
+**What this means for Job Recruitment And Applicant Tracking System:** 500 MB database and 1 GB storage are
 the binding constraints (CVs at up to 10 MB each fill 1 GB fast — ~100 CVs).
 Plan the move to Pro ($25/month reported) before launch, or keep the pilot
 tiny and monitored.
@@ -62,10 +62,10 @@ tiny and monitored.
 return errors) until the next billing cycle — there is no overage billing
 because there is no payment method on file.
 
-**What this means for HirePakistan:** the Hobby plan is fine for
+**What this means for Job Recruitment And Applicant Tracking System:** the Hobby plan is fine for
 development, demos, and a non-commercial pilot. **A production launch with
 real employers and candidates is commercial use and requires Pro**
-(~$20/user/month reported). Note HirePakistan is heavily server-rendered —
+(~$20/user/month reported). Note Job Recruitment And Applicant Tracking System is heavily server-rendered —
 every page hit is a function invocation, so watch that meter first. Also
 note: Pro itself carries no uptime SLA (SLAs are Enterprise-only per
 reports — **confirm at signup**).
@@ -81,7 +81,7 @@ reports — **confirm at signup**).
 | Actions cache storage | 10 GB per repo |
 | Scheduled workflows | Disabled after 60 days without repo activity (public repos; **confirm at signup**) |
 
-**What this means for HirePakistan:** CI (typecheck, lint, unit tests) for
+**What this means for Job Recruitment And Applicant Tracking System:** CI (typecheck, lint, unit tests) for
 this repo costs a few minutes per run — 2,000 minutes/month is comfortable
 for a private repo, and a public repo doesn't consume the quota at all.
 
@@ -108,7 +108,7 @@ If you outgrow the free tiers (or want guarantees they don't offer):
 
 - **Database:** any managed Postgres works for the *data* layer — reported
   options include Neon, Railway, Render, AWS RDS, or self-hosted Postgres.
-  **But** HirePakistan is coupled to Supabase beyond raw Postgres: Auth
+  **But** Job Recruitment And Applicant Tracking System is coupled to Supabase beyond raw Postgres: Auth
   (users, sessions, email flows), Storage (buckets + signed URLs), and RLS
   helpers referencing `auth.uid()`. Migrating the database means
   re-platforming auth and storage too — budget for that, it's not a

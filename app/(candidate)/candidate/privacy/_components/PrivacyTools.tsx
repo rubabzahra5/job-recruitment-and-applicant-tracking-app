@@ -28,7 +28,7 @@ export function ExportButton() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `hirepakistan-data-export-${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `job-recruitment-and-applicant-tracking-system-data-export-${new Date().toISOString().slice(0, 10)}.json`;
       document.body.appendChild(a);
       a.click();
       a.remove();
