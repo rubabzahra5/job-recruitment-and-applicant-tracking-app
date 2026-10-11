@@ -1,4 +1,4 @@
-# Job Recruitment And Applicant Tracking System — Delivery Summary
+# TalentBridge — Delivery Summary
 
 **Date:** 2026-10-10 · **Workspace:** `/home/hatch/workspace/job-recruitment-and-applicant-tracking-system`
 **Status:** Complete application built, verified, and committed. **Never connected to a live Supabase project** — all database/auth/storage paths are code-complete and migration-validated against real PostgreSQL 16, but first live integration must happen on the owner's dev project.

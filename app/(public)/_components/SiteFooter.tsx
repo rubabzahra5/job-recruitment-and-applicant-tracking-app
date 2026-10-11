@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { Logo } from "@/components/Logo";
+
 const SEEKER_LINKS = [
   { href: "/jobs", label: "Browse jobs" },
   { href: "/categories", label: "Job categories" },
@@ -21,9 +23,7 @@ export function SiteFooter() {
     <footer className="bg-[#0e2a47] text-slate-300">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 md:grid-cols-4">
         <div>
-          <p className="text-lg font-extrabold tracking-tight text-white">
-            Hire<span className="text-teal-400">Pakistan</span>
-          </p>
+          <Logo dark />
           <p className="mt-3 max-w-xs text-sm leading-relaxed text-slate-400">
             Pakistan&apos;s employment portal connecting job seekers with verified
             employers — from Karachi to Khyber, across every industry.
@@ -76,7 +76,7 @@ export function SiteFooter() {
       </div>
       <div className="border-t border-white/10">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-4 py-5 text-xs text-slate-400 sm:flex-row">
-          <p>© 2026 Job Recruitment And Applicant Tracking System. All rights reserved.</p>
+          <p>© 2026 TalentBridge. All rights reserved.</p>
           <p>Built for Pakistan&apos;s workforce · All amounts in PKR</p>
         </div>
       </div>

@@ -5,7 +5,7 @@ import { ContactForm } from "../_components/ContactForm";
 
 export const metadata: Metadata = {
   title: "Contact Us",
-  description: "Get in touch with the Job Recruitment And Applicant Tracking System team.",
+  description: "Get in touch with the TalentBridge team.",
 };
 
 export default function ContactPage() {

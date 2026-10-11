@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "How Job Recruitment And Applicant Tracking System collects, uses, retains, and deletes your personal data.",
+  description: "How TalentBridge collects, uses, retains, and deletes your personal data.",
 };
 
 function H2({ children }: { children: React.ReactNode }) {
@@ -21,7 +21,7 @@ export default function PrivacyPage() {
       <p className="mt-2 text-sm text-slate-500">Last updated: 10 October 2026</p>
 
       <P>
-        Job Recruitment And Applicant Tracking System (“we”, “us”) operates a job recruitment and applicant
+        TalentBridge (“we”, “us”) operates a job recruitment and applicant
         tracking platform for Pakistan. This policy describes what personal
         data we collect, why we collect it, how long we keep it, and the
         rights you have over it. It applies to candidates, employer staff,
@@ -97,7 +97,7 @@ export default function PrivacyPage() {
 
       <H2>8. Children</H2>
       <P>
-        Job Recruitment And Applicant Tracking System is intended for people aged 16 and over who are seeking
+        TalentBridge is intended for people aged 16 and over who are seeking
         employment. We do not knowingly collect data from children under 16.
       </P>
 

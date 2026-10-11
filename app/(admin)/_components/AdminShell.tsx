@@ -68,7 +68,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen bg-slate-100">
       <aside className="sticky top-0 hidden h-screen w-60 shrink-0 flex-col bg-slate-950 text-slate-300 md:flex">
         <div className="border-b border-slate-800 px-5 py-4">
-          <p className="text-base font-bold text-white">Job Recruitment And Applicant Tracking System</p>
+          <p className="text-base font-bold text-white">TalentBridge</p>
           <p className="mt-0.5 text-xs font-medium uppercase tracking-wider text-amber-400">
             Control Center
           </p>

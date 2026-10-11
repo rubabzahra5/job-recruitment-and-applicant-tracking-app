@@ -1,4 +1,4 @@
-# Job Recruitment And Applicant Tracking System — Module B: Candidate Portal (Agent B)
+# TalentBridge — Module B: Candidate Portal (Agent B)
 
 Date: 2026-10-10. Workspace: `/home/hatch/workspace/job-recruitment-and-applicant-tracking-system`.
 

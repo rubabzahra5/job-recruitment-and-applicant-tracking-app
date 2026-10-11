@@ -1,4 +1,4 @@
-# Job Recruitment And Applicant Tracking System — Test Report (Test Agent)
+# TalentBridge — Test Report (Test Agent)
 
 Date: 2026-10-10. Agent: test agent (subagent). Territory: `tests/`, `e2e/`, `TEST_REPORT.md`.
 Read-only everywhere else — no changes were made to `app/`, `lib/`, `components/`,

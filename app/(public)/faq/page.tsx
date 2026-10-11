@@ -5,12 +5,12 @@ import { Card } from "@/components/ui/Card";
 
 export const metadata: Metadata = {
   title: "Frequently Asked Questions",
-  description: "Answers about using Job Recruitment And Applicant Tracking System as a job seeker or employer.",
+  description: "Answers about using TalentBridge as a job seeker or employer.",
 };
 
 const SEEKER_FAQS = [
   {
-    q: "Is Job Recruitment And Applicant Tracking System free for job seekers?",
+    q: "Is TalentBridge free for job seekers?",
     a: "Yes. Searching jobs, creating a candidate account, saving vacancies, setting up job alerts, and applying are all free. We never charge candidates.",
   },
   {
@@ -45,7 +45,7 @@ const EMPLOYER_FAQS = [
     a: "We confirm your organization is a legitimate, operating entity in Pakistan before marking it verified. Verified employers get a badge on their jobs and company profile.",
   },
   {
-    q: "Can I manage applications on Job Recruitment And Applicant Tracking System?",
+    q: "Can I manage applications on TalentBridge?",
     a: "Yes — that's the applicant tracking system. Applications move through a structured pipeline (screening, shortlist, interviews, offer), with interview scheduling, feedback, and offer management built in.",
   },
   {

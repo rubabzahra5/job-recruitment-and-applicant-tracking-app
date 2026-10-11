@@ -1,4 +1,4 @@
-# Job Recruitment And Applicant Tracking System — Foundation Summary (Phase 1)
+# TalentBridge — Foundation Summary (Phase 1)
 
 Date: 2026-10-10. Workspace: `/home/hatch/workspace/job-recruitment-and-applicant-tracking-system`.
 

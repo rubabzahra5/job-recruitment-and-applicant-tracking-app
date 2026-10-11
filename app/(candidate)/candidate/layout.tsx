@@ -23,7 +23,7 @@ export default async function CandidateLayout({
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
           <Link href="/candidate" className="flex items-center gap-2">
-            <span className="text-lg font-bold text-brand-700">Job Recruitment And Applicant Tracking System</span>
+            <span className="text-lg font-bold text-brand-700">TalentBridge</span>
             <span className="rounded bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
               Candidate
             </span>

@@ -5,7 +5,7 @@
 > legal and HR counsel must review before launch**. The platform is software;
 > whether its use is lawful depends on how you configure and operate it.
 
-Job Recruitment And Applicant Tracking System is built so that jurisdiction-specific rules are
+TalentBridge is built so that jurisdiction-specific rules are
 **configuration, not code** — but configuration is still your
 responsibility. Treat every section below as "discuss with counsel, then
 configure."

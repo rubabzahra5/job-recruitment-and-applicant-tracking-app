@@ -47,12 +47,32 @@ export default async function HomePage() {
   return (
     <main>
       {/* ── Hero ─────────────────────────────────────────── */}
-      <section className="bg-[#0e2a47]">
-        <div className="mx-auto max-w-6xl px-4 py-16 md:py-24">
-          <p className="text-sm font-semibold uppercase tracking-widest text-teal-400">
+      <section className="relative overflow-hidden bg-[#0e2a47]">
+        {/* gradient wash + bridge-arch motif */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(60rem 30rem at 85% -10%, rgba(15,98,196,0.35), transparent 60%), radial-gradient(40rem 24rem at -10% 110%, rgba(45,212,191,0.12), transparent 60%)",
+          }}
+        />
+        <svg
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-24 -top-24 h-[28rem] w-[28rem] opacity-[0.07]"
+          viewBox="0 0 200 200"
+          fill="none"
+        >
+          <path d="M20 150 Q100 40 180 150" stroke="white" strokeWidth="10" />
+          <path d="M20 150 L20 185 M180 150 L180 185" stroke="white" strokeWidth="10" />
+          <rect x="15" y="140" width="170" height="12" rx="6" fill="white" />
+        </svg>
+        <div className="relative mx-auto max-w-6xl px-4 py-16 md:py-24">
+          <p className="inline-flex items-center gap-2 rounded-full border border-teal-400/30 bg-teal-400/10 px-3 py-1 text-sm font-semibold text-teal-300">
+            <span className="h-2 w-2 rounded-full bg-teal-400" aria-hidden="true" />
             Pakistan&apos;s employment portal
           </p>
-          <h1 className="mt-3 max-w-3xl text-4xl font-extrabold tracking-tight text-white md:text-5xl">
+          <h1 className="mt-4 max-w-3xl text-4xl font-extrabold tracking-tight text-white md:text-5xl">
             Find work that moves Pakistan forward
           </h1>
           <p className="mt-4 max-w-2xl text-lg text-slate-300">

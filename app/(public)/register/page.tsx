@@ -8,7 +8,7 @@ import { getDashboardPath, safeNextPath } from "../_lib/dashboard";
 
 export const metadata: Metadata = {
   title: "Create Account",
-  description: "Register a free Job Recruitment And Applicant Tracking System account as a job seeker or employer.",
+  description: "Register a free TalentBridge account as a job seeker or employer.",
 };
 
 type SearchParams = Record<string, string | string[] | undefined>;

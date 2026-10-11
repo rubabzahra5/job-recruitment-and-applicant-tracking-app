@@ -137,7 +137,7 @@ export const SETTING_SPECS: SettingSpec[] = [
 ];
 
 export const DEFAULTS: Record<string, unknown> = {
-  platform_name: "Job Recruitment And Applicant Tracking System",
+  platform_name: "TalentBridge",
   operating_mode: "centralized",
   currency: "PKR",
   timezone: "Asia/Karachi",

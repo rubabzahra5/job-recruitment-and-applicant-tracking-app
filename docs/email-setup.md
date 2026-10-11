@@ -1,6 +1,6 @@
 # Email Setup
 
-Two separate email concerns exist in Job Recruitment And Applicant Tracking System. They are configured
+Two separate email concerns exist in TalentBridge. They are configured
 independently, and each one is **honest about whether it actually sends**.
 
 ## 1. Supabase Auth emails (verification, password reset)
@@ -89,7 +89,7 @@ deploy:
 
 ### What this means for you
 
-- You can run, demo, and even pilot Job Recruitment And Applicant Tracking System with **zero email
+- You can run, demo, and even pilot TalentBridge with **zero email
   configuration** — users get in-app notifications, and every screen tells
   the truth about email.
 - Before a real launch, configure Resend (app emails) **and** custom SMTP in

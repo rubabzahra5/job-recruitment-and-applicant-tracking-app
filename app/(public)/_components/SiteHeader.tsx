@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { getSessionUser } from "@/lib/auth";
+import { Logo } from "@/components/Logo";
 import { getDashboardPath } from "../_lib/dashboard";
 import { SignOutButton } from "./SignOutButton";
 
@@ -31,16 +32,8 @@ export async function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-4">
-        <Link href="/" className="flex items-center gap-2" aria-label="Job Recruitment And Applicant Tracking System home">
-          <span
-            aria-hidden="true"
-            className="flex h-9 w-9 items-center justify-center rounded-md bg-brand-900 text-lg font-extrabold text-white"
-          >
-            H
-          </span>
-          <span className="text-lg font-extrabold tracking-tight text-brand-900">
-            Hire<span className="text-teal-600">Pakistan</span>
-          </span>
+        <Link href="/" className="flex items-center gap-2" aria-label="TalentBridge home">
+          <Logo />
         </Link>
 
         <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">

@@ -54,7 +54,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     <main className="mx-auto max-w-6xl px-4 py-8">
       <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">Search jobs</h1>
       <p className="mt-1 text-slate-600">
-        One search across every live vacancy on Job Recruitment And Applicant Tracking System.
+        One search across every live vacancy on TalentBridge.
       </p>
 
       <Card className="mt-6 p-5">

@@ -5,7 +5,7 @@ import { ForgotPasswordForm } from "../_components/ForgotPasswordForm";
 
 export const metadata: Metadata = {
   title: "Forgot Password",
-  description: "Reset your Job Recruitment And Applicant Tracking System password.",
+  description: "Reset your TalentBridge password.",
 };
 
 export default function ForgotPasswordPage() {

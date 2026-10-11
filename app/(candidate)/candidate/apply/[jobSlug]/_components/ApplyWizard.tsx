@@ -467,7 +467,7 @@ export function ApplyWizard({
                     className="mt-1 h-4 w-4 accent-brand-600"
                   />
                   <span>
-                    I consent to Job Recruitment And Applicant Tracking System and {job.orgName} processing my
+                    I consent to TalentBridge and {job.orgName} processing my
                     application data (profile, CV and answers) for recruitment
                     purposes. I understand my data is stored securely and I can
                     request export or deletion anytime from the Privacy page.

@@ -1,6 +1,6 @@
 # Deployment Guide
 
-Beginner-friendly, step by step, for someone deploying Job Recruitment And Applicant Tracking System for the
+Beginner-friendly, step by step, for someone deploying TalentBridge for the
 first time. Assumes you have a GitHub account, a Supabase account, and a
 Vercel account (all free tiers are enough to start; see
 `docs/free-tier-limits.md`).
@@ -23,7 +23,7 @@ Vercel account (all free tiers are enough to start; see
 
 ```bash
 git add .
-git commit -m "Initial Job Recruitment And Applicant Tracking System deploy"
+git commit -m "Initial TalentBridge deploy"
 git remote add origin git@github.com:<you>/job-recruitment-and-applicant-tracking-system.git
 git push -u origin main
 ```
