@@ -76,8 +76,8 @@ const TRANSITION_PAIRS: Array<[string, string]> = [
 
 const byKey = new Map(stages.map((s) => [s.key, s.id]));
 const transitions: PipelineTransition[] = TRANSITION_PAIRS.map(([from, to]) => ({
-  from_stage_id: byKey.get(from)!,
-  to_stage_id: byKey.get(to)!,
+  from_stage: byKey.get(from)!,
+  to_stage: byKey.get(to)!,
   from_key: from,
   to_key: to,
 }));
@@ -188,8 +188,8 @@ describe("loadPipeline", () => {
           }
           return {
             data: TRANSITION_PAIRS.slice(0, 2).map(([from, to]) => ({
-              from_stage_id: byKey.get(from),
-              to_stage_id: byKey.get(to),
+              from_stage: byKey.get(from),
+              to_stage: byKey.get(to),
               from: { key: from },
               to: { key: to },
             })),
@@ -201,8 +201,8 @@ describe("loadPipeline", () => {
     const { stages: gotStages, transitions: gotTransitions } = await loadPipeline(loader);
     expect(gotStages).toHaveLength(13);
     expect(gotTransitions[0]).toEqual({
-      from_stage_id: byKey.get("applied"),
-      to_stage_id: byKey.get("initial_screening"),
+      from_stage: byKey.get("applied"),
+      to_stage: byKey.get("initial_screening"),
       from_key: "applied",
       to_key: "initial_screening",
     });

@@ -46,9 +46,9 @@ const STAGE_ROWS: Row[] = [
   { id: "s13", key: "withdrawn", label: "Withdrawn", sort_order: 13, is_terminal: true },
 ];
 const TRANSITION_ROWS: Row[] = [
-  { from_stage_id: "s1", to_stage_id: "s13", from: { key: "applied" }, to: { key: "withdrawn" } },
-  { from_stage_id: "s8", to_stage_id: "s13", from: { key: "offer_pending" }, to: { key: "withdrawn" } },
-  { from_stage_id: "s9", to_stage_id: "s13", from: { key: "offer_accepted" }, to: { key: "withdrawn" } },
+  { from_stage: "s1", to_stage: "s13", from: { key: "applied" }, to: { key: "withdrawn" } },
+  { from_stage: "s8", to_stage: "s13", from: { key: "offer_pending" }, to: { key: "withdrawn" } },
+  { from_stage: "s9", to_stage: "s13", from: { key: "offer_accepted" }, to: { key: "withdrawn" } },
 ];
 
 function makeAdmin(opts: { appRow: Row | null; updates: Row[] }) {

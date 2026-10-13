@@ -20,10 +20,10 @@ const stages: PipelineStage[] = [
 ];
 
 const transitions: PipelineTransition[] = [
-  { from_stage_id: "s1", to_stage_id: "s2", from_key: "applied", to_key: "initial_screening" },
-  { from_stage_id: "s2", to_stage_id: "s3", from_key: "initial_screening", to_key: "shortlisted" },
-  { from_stage_id: "s1", to_stage_id: "s4", from_key: "applied", to_key: "rejected" },
-  { from_stage_id: "s2", to_stage_id: "s5", from_key: "initial_screening", to_key: "withdrawn" },
+  { from_stage: "s1", to_stage: "s2", from_key: "applied", to_key: "initial_screening" },
+  { from_stage: "s2", to_stage: "s3", from_key: "initial_screening", to_key: "shortlisted" },
+  { from_stage: "s1", to_stage: "s4", from_key: "applied", to_key: "rejected" },
+  { from_stage: "s2", to_stage: "s5", from_key: "initial_screening", to_key: "withdrawn" },
 ];
 
 describe("isValidTransition", () => {

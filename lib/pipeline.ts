@@ -25,8 +25,8 @@ export interface PipelineStage {
 }
 
 export interface PipelineTransition {
-  from_stage_id: string;
-  to_stage_id: string;
+  from_stage: string;
+  to_stage: string;
   from_key: string;
   to_key: string;
 }
@@ -46,7 +46,7 @@ export async function loadPipeline(client: PipelineLoader): Promise<{
   const [stagesRes, transitionsRes] = await Promise.all([
     client.from("pipeline_stages").select("id,key,label,sort_order,is_terminal"),
     client.from("pipeline_transitions").select(
-      "from_stage_id,to_stage_id,from:pipeline_stages!pipeline_transitions_from_stage_fkey(key),to:pipeline_stages!pipeline_transitions_to_stage_fkey(key)",
+      "from_stage,to_stage,from:pipeline_stages!pipeline_transitions_from_stage_fkey(key),to:pipeline_stages!pipeline_transitions_to_stage_fkey(key)",
     ),
   ]);
   if (stagesRes.error) throw new Error(`Failed to load pipeline stages: ${stagesRes.error.message}`);
@@ -55,13 +55,13 @@ export async function loadPipeline(client: PipelineLoader): Promise<{
   }
   const stages = (stagesRes.data ?? []) as PipelineStage[];
   const transitions = ((transitionsRes.data ?? []) as Array<{
-    from_stage_id: string;
-    to_stage_id: string;
+    from_stage: string;
+    to_stage: string;
     from: { key: string } | null;
     to: { key: string } | null;
   }>).map((t) => ({
-    from_stage_id: t.from_stage_id,
-    to_stage_id: t.to_stage_id,
+    from_stage: t.from_stage,
+    to_stage: t.to_stage,
     from_key: t.from?.key ?? "",
     to_key: t.to?.key ?? "",
   }));
