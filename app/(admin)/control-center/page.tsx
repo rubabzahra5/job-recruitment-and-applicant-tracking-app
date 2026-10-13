@@ -213,6 +213,48 @@ export default async function OverviewPage({
         <Stat label="Hires" value={(hiresRes.data ?? []).length} />
       </section>
 
+      {/* Phase 2: Free-tier headroom monitor — alerts before hitting Supabase/Vercel limits. */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Free-tier headroom</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4 text-sm md:grid-cols-4">
+            <HeadroomMetric
+              label="Users"
+              current={profiles.length}
+              limit={50000}
+              unit="users"
+            />
+            <HeadroomMetric
+              label="Jobs"
+              current={jobs.length}
+              limit={100000}
+              unit="jobs"
+              note="DB rows, not a hard limit"
+            />
+            <HeadroomMetric
+              label="Applications"
+              current={apps.length}
+              limit={500000}
+              unit="applications"
+              note="DB rows, not a hard limit"
+            />
+            <HeadroomMetric
+              label="Storage buckets"
+              current={bucketNames.size}
+              limit={100}
+              unit="buckets"
+            />
+          </div>
+          <p className="mt-3 text-xs text-slate-500">
+            Supabase free tier: 500MB database, 1GB storage, 50K monthly active users.
+            Vercel free tier: 100GB bandwidth/month. These are soft estimates —
+            check the Supabase and Vercel dashboards for exact usage.
+          </p>
+        </CardContent>
+      </Card>
+
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
@@ -381,5 +423,42 @@ export default async function OverviewPage({
         </CardContent>
       </Card>
     </main>
+  );
+}
+
+/**
+ * Phase 2: Free-tier headroom metric.
+ * Shows current usage vs limit with a color-coded progress bar.
+ */
+function HeadroomMetric({
+  label,
+  current,
+  limit,
+  unit,
+  note,
+}: {
+  label: string;
+  current: number;
+  limit: number;
+  unit: string;
+  note?: string;
+}) {
+  const pct = Math.min(100, Math.round((current / limit) * 100));
+  const tone = pct >= 90 ? "bg-red-500" : pct >= 70 ? "bg-amber-500" : "bg-emerald-500";
+  return (
+    <div>
+      <div className="flex items-baseline justify-between">
+        <span className="font-medium text-slate-700">{label}</span>
+        <span className="text-xs text-slate-500">
+          {current.toLocaleString()} / {limit.toLocaleString()}
+        </span>
+      </div>
+      <div className="mt-1 h-2 overflow-hidden rounded-full bg-slate-100">
+        <div className={`h-full rounded-full ${tone}`} style={{ width: `${pct}%` }} />
+      </div>
+      <p className="mt-1 text-xs text-slate-500">
+        {pct}% of {unit} limit{note ? ` · ${note}` : ""}
+      </p>
+    </div>
   );
 }
