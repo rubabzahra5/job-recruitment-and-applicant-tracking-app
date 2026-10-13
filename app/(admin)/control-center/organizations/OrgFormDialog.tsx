@@ -1,10 +1,6 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
 import * as React from "react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
@@ -12,26 +8,6 @@ import { FormField } from "@/components/ui/FormField";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { createOrganization, updateOrganization } from "./actions";
-
-const schema = z.object({
-  name: z.string().trim().min(2, "Name is required.").max(200),
-  slug: z
-    .string()
-    .trim()
-    .min(2)
-    .max(80)
-    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Lowercase letters, numbers and hyphens only."),
-  industry: z.string().trim().max(120).optional(),
-  website: z.string().trim().max(200).optional(),
-  contact_email: z.string().trim().max(200).optional().refine(
-    (v) => !v || /.+@.+\..+/.test(v),
-    "Enter a valid contact email.",
-  ),
-  contact_phone: z.string().trim().max(30).optional(),
-  about: z.string().trim().max(5000).optional(),
-});
-
-export type OrgFormValues = z.infer<typeof schema>;
 
 export function slugify(name: string): string {
   return name
@@ -42,6 +18,20 @@ export function slugify(name: string): string {
     .slice(0, 80);
 }
 
+interface OrgFormData {
+  name: string;
+  slug: string;
+  industry: string;
+  website: string;
+  contact_email: string;
+  contact_phone: string;
+  about: string;
+}
+
+/**
+ * Organization create/edit dialog.
+ * Uses simple controlled inputs (no react-hook-form) to avoid SSR issues.
+ */
 export function OrgFormDialog({
   mode,
   orgId,
@@ -50,51 +40,66 @@ export function OrgFormDialog({
 }: {
   mode: "create" | "edit";
   orgId?: string;
-  initial?: Partial<OrgFormValues>;
+  initial?: Partial<OrgFormData>;
   triggerLabel: string;
 }) {
-  const router = useRouter();
   const [open, setOpen] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const {
-    register,
-    handleSubmit,
-    reset,
-    setValue,
-    watch,
-    formState: { errors, isSubmitting },
-  } = useForm<OrgFormValues>({
-    resolver: zodResolver(schema),
-    defaultValues: {
-      name: initial?.name ?? "",
-      slug: initial?.slug ?? "",
-      industry: initial?.industry ?? "",
-      website: initial?.website ?? "",
-      contact_email: initial?.contact_email ?? "",
-      contact_phone: initial?.contact_phone ?? "",
-      about: initial?.about ?? "",
-    },
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [form, setForm] = React.useState<OrgFormData>({
+    name: initial?.name ?? "",
+    slug: initial?.slug ?? "",
+    industry: initial?.industry ?? "",
+    website: initial?.website ?? "",
+    contact_email: initial?.contact_email ?? "",
+    contact_phone: initial?.contact_phone ?? "",
+    about: initial?.about ?? "",
   });
-  const name = watch("name");
 
-  React.useEffect(() => {
-    if (mode === "create" && name) {
-      setValue("slug", slugify(name), { shouldValidate: false });
-    }
-  }, [name, mode, setValue]);
+  const set = (key: keyof OrgFormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const value = e.target.value;
+    setForm((prev) => {
+      const next = { ...prev, [key]: value };
+      // Auto-generate slug from name in create mode.
+      if (mode === "create" && key === "name") {
+        next.slug = slugify(value);
+      }
+      return next;
+    });
+  };
 
-  async function onSubmit(values: OrgFormValues) {
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
     setError(null);
-    const result =
-      mode === "create"
-        ? await createOrganization(values)
-        : await updateOrganization(orgId ?? "", values);
-    if (result.ok) {
-      setOpen(false);
-      reset();
-      router.refresh();
-    } else {
-      setError(result.error ?? "Save failed.");
+
+    // Basic validation.
+    if (form.name.trim().length < 2) {
+      setError("Name is required (min 2 characters).");
+      return;
+    }
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(form.slug.trim())) {
+      setError("Slug must be lowercase letters, numbers and hyphens only.");
+      return;
+    }
+    if (form.contact_email && !/.+@.+\..+/.test(form.contact_email)) {
+      setError("Enter a valid contact email.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const result =
+        mode === "create"
+          ? await createOrganization(form)
+          : await updateOrganization(orgId ?? "", form);
+      if (result.ok) {
+        setOpen(false);
+        window.location.reload();
+      } else {
+        setError(result.error ?? "Save failed.");
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -113,31 +118,31 @@ export function OrgFormDialog({
         onClose={() => setOpen(false)}
         title={mode === "create" ? "Create organization" : "Edit organization"}
       >
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <FormField label="Name" htmlFor="org-name" required error={errors.name?.message}>
-            <Input id="org-name" invalid={!!errors.name} {...register("name")} />
+        <form onSubmit={onSubmit} className="space-y-4">
+          <FormField label="Name" htmlFor="org-name" required>
+            <Input id="org-name" value={form.name} onChange={set("name")} />
           </FormField>
-          <FormField label="Slug" htmlFor="org-slug" required error={errors.slug?.message} hint="URL-safe unique identifier.">
-            <Input id="org-slug" invalid={!!errors.slug} {...register("slug")} />
+          <FormField label="Slug" htmlFor="org-slug" required hint="URL-safe unique identifier.">
+            <Input id="org-slug" value={form.slug} onChange={set("slug")} />
           </FormField>
           <div className="grid grid-cols-2 gap-4">
-            <FormField label="Industry" htmlFor="org-industry" error={errors.industry?.message}>
-              <Input id="org-industry" {...register("industry")} />
+            <FormField label="Industry" htmlFor="org-industry">
+              <Input id="org-industry" value={form.industry} onChange={set("industry")} />
             </FormField>
-            <FormField label="Website" htmlFor="org-website" error={errors.website?.message}>
-              <Input id="org-website" placeholder="https://" {...register("website")} />
+            <FormField label="Website" htmlFor="org-website">
+              <Input id="org-website" placeholder="https://" value={form.website} onChange={set("website")} />
             </FormField>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <FormField label="Contact email" htmlFor="org-email" error={errors.contact_email?.message}>
-              <Input id="org-email" type="email" {...register("contact_email")} />
+            <FormField label="Contact email" htmlFor="org-email">
+              <Input id="org-email" type="email" value={form.contact_email} onChange={set("contact_email")} />
             </FormField>
-            <FormField label="Contact phone" htmlFor="org-phone" error={errors.contact_phone?.message}>
-              <Input id="org-phone" placeholder="03XXXXXXXXX" {...register("contact_phone")} />
+            <FormField label="Contact phone" htmlFor="org-phone">
+              <Input id="org-phone" placeholder="03XXXXXXXXX" value={form.contact_phone} onChange={set("contact_phone")} />
             </FormField>
           </div>
-          <FormField label="About" htmlFor="org-about" error={errors.about?.message}>
-            <Textarea id="org-about" rows={3} {...register("about")} />
+          <FormField label="About" htmlFor="org-about">
+            <Textarea id="org-about" rows={3} value={form.about} onChange={set("about")} />
           </FormField>
           {error && <Alert tone="error">{error}</Alert>}
           <div className="flex justify-end gap-2">
