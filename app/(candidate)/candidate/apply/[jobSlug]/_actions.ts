@@ -8,6 +8,7 @@ import {
 } from "@/app/(candidate)/_lib/candidate-guard";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createNotification } from "@/lib/notifications";
+import { checkRateLimit } from "@/lib/rate-limit";
 import type { ActionResult } from "@/app/(candidate)/_components/form-helpers";
 
 const submitSchema = z.object({
@@ -34,7 +35,7 @@ const submitSchema = z.object({
 export type SubmitApplicationInput = z.infer<typeof submitSchema>;
 
 export interface SubmitResult extends ActionResult {
-  code?: "ALREADY_APPLIED" | "JOB_CLOSED" | "JOB_NOT_FOUND";
+  code?: "ALREADY_APPLIED" | "JOB_CLOSED" | "JOB_NOT_FOUND" | "RATE_LIMITED";
   applicationId?: string;
 }
 
@@ -87,6 +88,17 @@ export async function submitApplication(
   input: SubmitApplicationInput,
 ): Promise<SubmitResult> {
   const user = await requireCandidate();
+
+  // SECURITY (H1/M3): Limit application velocity (20/day per user) to prevent
+  // spam blasts and AI-generated mass applications.
+  const { allowed, retryAfterSec } = await checkRateLimit("apply", user.id, 20, 86400);
+  if (!allowed) {
+    const hours = Math.ceil(retryAfterSec / 3600);
+    return fail(
+      `You've reached the daily application limit (20/day). Please try again in ~${hours} hour(s).`,
+      "RATE_LIMITED",
+    );
+  }
 
   const parsed = submitSchema.safeParse(input);
   if (!parsed.success) {

@@ -1,7 +1,7 @@
 "use server";
 
 import { requireSessionUser } from "@/lib/auth";
-import { requireOrgRole } from "@/lib/rbac";
+import { requireOrgRole, requireSuperAdmin } from "@/lib/rbac";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { writeAudit } from "@/lib/audit";
 import { karachiWallClockToUTC } from "@/lib/format";
@@ -206,8 +206,13 @@ export async function transitionJob(
     assertJobTransition(from, to);
 
     // Role rules per transition.
+    // SECURITY (C1): Only platform super-admins can approve/reject jobs.
+    // Org admins must submit for review (draft -> pending_review); the
+    // platform moderation queue (control-center/approvals) makes the
+    // approve/reject decision. This prevents orgs from self-approving
+    // fake or low-quality job postings.
     if (to === "approved" || to === "rejected") {
-      await requireOrgRole(user.id, orgId, ["org_admin", "hr_manager"]);
+      await requireSuperAdmin(user.id);
       if (to === "rejected" && !note?.trim()) throw new Error("A rejection note is required.");
     } else if (to === "published" || to === "paused" || to === "closed" || to === "archived") {
       await requireOrgRole(user.id, orgId, { atLeast: "recruiter" });

@@ -1,9 +1,11 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { getDashboardPath, safeNextPath } from "../_lib/dashboard";
 
 const loginSchema = z.object({
@@ -29,6 +31,16 @@ export async function loginAction(input: unknown): Promise<LoginResult> {
       if (!(key in fieldErrors)) fieldErrors[key] = issue.message;
     }
     return { ok: false, error: "Please check your details and try again.", fieldErrors };
+  }
+
+  // SECURITY (H1): Rate limit login attempts (5/minute per IP) to prevent brute-forcing.
+  const ip = getClientIp(await headers());
+  const { allowed, retryAfterSec } = await checkRateLimit("login", ip, 5, 60);
+  if (!allowed) {
+    return {
+      ok: false,
+      error: `Too many login attempts. Please try again in ${retryAfterSec} seconds.`,
+    };
   }
 
   const supabase = await createClient();

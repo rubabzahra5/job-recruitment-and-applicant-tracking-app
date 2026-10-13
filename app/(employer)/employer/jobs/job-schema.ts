@@ -63,7 +63,15 @@ export const jobPayloadSchema = z
       message: "Maximum experience must be greater than or equal to minimum experience.",
       path: ["experienceMax"],
     },
-  );
+  )
+  // L1: Salary transparency nudge. If the employer marks salary as disclosed,
+  // they must provide at least one bound (min or max). Jobs without disclosed
+  // salary show a "salary not disclosed" badge to candidates.
+  .refine((d) => !d.salaryDisclosed || d.salaryMin !== null || d.salaryMax !== null, {
+    message:
+      "You marked salary as disclosed — please provide at least a minimum or maximum salary (PKR).",
+    path: ["salaryMin"],
+  });
 
 export type JobPayload = z.infer<typeof jobPayloadSchema>;
 

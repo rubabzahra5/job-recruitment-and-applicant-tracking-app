@@ -46,8 +46,8 @@ export interface OrgContext {
 }
 
 export class NoOrganizationError extends Error {
-  constructor() {
-    super("No organization membership found.");
+  constructor(message = "No organization membership found.") {
+    super(message);
     this.name = "NoOrganizationError";
   }
 }
@@ -83,12 +83,22 @@ export async function getOrgContext(requestedOrgId?: string | null): Promise<Org
   const [{ data: org }, { data: memberships }] = await Promise.all([
     admin
       .from("organizations")
-      .select("id,name,slug,logo_url")
+      .select("id,name,slug,logo_url,account_status")
       .eq("id", orgId)
       .single(),
     admin.from("organization_memberships").select("org_id").eq("user_id", user.id).eq("is_active", true),
   ]);
   if (!org) throw new NoOrganizationError();
+  // SECURITY (M4): Suspended/closed orgs are inaccessible to staff.
+  // Super-admins can still access for audit/investigation.
+  const accountStatus = (org as { account_status?: string }).account_status;
+  if (accountStatus !== "active" && !superAdmin) {
+    throw new NoOrganizationError(
+      accountStatus === "suspended"
+        ? "This organization has been suspended. Contact platform support."
+        : "This organization is no longer active.",
+    );
+  }
 
   const orgNameById = new Map<string, string>();
   if (memberships && memberships.length > 0) {
@@ -231,6 +241,21 @@ export async function applyStageTransition(input: StageChangeInput): Promise<voi
     .eq("id", input.applicationId)
     .eq("org_id", input.orgId);
   if (updateError) throw new Error(`Failed to update stage: ${updateError.message}`);
+
+  // H2: Track employer activity for ghost-job accountability.
+  // Update the job's last_employer_activity_at so stale postings can be
+  // identified and auto-paused.
+  const { data: app } = await admin
+    .from("applications")
+    .select("job_id")
+    .eq("id", input.applicationId)
+    .maybeSingle();
+  if (app?.job_id) {
+    await admin
+      .from("jobs")
+      .update({ last_employer_activity_at: new Date().toISOString() })
+      .eq("id", app.job_id as string);
+  }
 
   const { error: historyError } = await admin.from("application_status_history").insert({
     application_id: input.applicationId,

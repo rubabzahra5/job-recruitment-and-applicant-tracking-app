@@ -33,7 +33,7 @@ export interface UserRoleRow {
 }
 
 /** Higher number = more privilege. Used for "at least" checks. */
-const ROLE_RANK: Record<OrgRole, number> = {
+export const ROLE_RANK: Record<OrgRole, number> = {
   employee: 1,
   hiring_manager: 2,
   recruiter: 3,

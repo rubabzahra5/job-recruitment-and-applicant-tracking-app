@@ -33,6 +33,11 @@ vi.mock("@/lib/notifications", () => ({
 vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
+// Rate limiting is tested separately; allow all in these unit tests.
+vi.mock("@/lib/rate-limit", () => ({
+  checkRateLimit: vi.fn().mockResolvedValue({ allowed: true, retryAfterSec: 0 }),
+  getClientIp: vi.fn().mockReturnValue("127.0.0.1"),
+}));
 
 const USER_ID = "user-1";
 const PROFILE_ID = "profile-1";

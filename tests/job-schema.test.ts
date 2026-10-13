@@ -51,8 +51,12 @@ describe("jobPayloadSchema — salary range (min <= max)", () => {
   it("accepts open-ended ranges (one side null)", () => {
     expect(jobPayloadSchema.safeParse(validPayload({ salaryMin: null })).success).toBe(true);
     expect(jobPayloadSchema.safeParse(validPayload({ salaryMax: null })).success).toBe(true);
+    // Both null is only valid when salary is not disclosed (L1 nudge:
+    // disclosed salary requires at least one bound).
     expect(
-      jobPayloadSchema.safeParse(validPayload({ salaryMin: null, salaryMax: null })).success,
+      jobPayloadSchema.safeParse(
+        validPayload({ salaryMin: null, salaryMax: null, salaryDisclosed: false }),
+      ).success,
     ).toBe(true);
   });
 

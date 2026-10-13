@@ -2,7 +2,8 @@
 
 import { z } from "zod";
 import { requireSessionUser } from "@/lib/auth";
-import { requireOrgRole, type OrgRole } from "@/lib/rbac";
+import { getUserOrgRole, requireOrgRole, ROLE_RANK, type OrgRole } from "@/lib/rbac";
+import { checkRateLimit } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { writeAudit } from "@/lib/audit";
 import { sendEmail, type EmailResult } from "@/lib/email";
@@ -51,6 +52,27 @@ export async function inviteMember(orgId: string, input: InviteInput): Promise<I
     const user = await requireSessionUser();
     await requireOrgRole(user.id, orgId, ["org_admin", "hr_manager"]);
     const parsed = inviteSchema.parse(input);
+    // SECURITY (M1): Prevent privilege escalation. An inviter can only invite
+    // roles with strictly lower rank than their own, except org_admin who can
+    // invite org_admin (needed for admin succession). This stops an hr_manager
+    // from inviting a colluding org_admin and taking over the organization.
+    const inviterRole = await getUserOrgRole(user.id, orgId);
+    const invitedRank = ROLE_RANK[parsed.role as OrgRole] ?? 0;
+    const inviterRank = inviterRole ? (ROLE_RANK[inviterRole] ?? 0) : 0;
+    const canInvite =
+      inviterRole === "org_admin" || // org_admin can invite any role (including org_admin)
+      (inviterRank > 0 && invitedRank < inviterRank); // others: strictly lower rank only
+    if (!canInvite) {
+      throw new Error(
+        `You cannot invite someone as ${parsed.role.replace("_", " ")}. ` +
+          `Your role (${(inviterRole ?? "none").replace("_", " ")}) can only invite lower-ranked roles.`,
+      );
+    }
+    // SECURITY (H1): Limit invitations (20/day per org) to prevent spam.
+    const { allowed: inviteAllowed } = await checkRateLimit("invite", orgId, 20, 86400);
+    if (!inviteAllowed) {
+      throw new Error("Daily invitation limit reached (20/day per organization). Try again tomorrow.");
+    }
     const admin = createAdminClient();
 
     const email = parsed.email.toLowerCase();
