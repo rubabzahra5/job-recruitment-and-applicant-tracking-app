@@ -25,7 +25,6 @@ import {
 } from "@/components/ui/Table";
 import { formatDateOnlyKarachi } from "@/lib/format";
 // TEMP: OrgFormDialog removed for bisect
-import { TestButton } from "./TestButton";
 import { setOrgAccountStatus, setOrgVerification } from "./actions";
 
 export const metadata: Metadata = { title: "Control Center — Organizations" };
@@ -109,7 +108,6 @@ export default async function OrganizationsPage({
           </p>
         </div>
         {/* TEMP: dialog removed for bisect */}
-        <TestButton />
       </div>
 
       <Card>
