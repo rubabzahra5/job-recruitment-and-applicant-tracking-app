@@ -97,6 +97,18 @@ export async function setJobStatus(payload: Record<string, string>): Promise<Act
 export async function autoPauseStaleJobs(inactivityDays = 30): Promise<ActionResult & { paused?: Array<{ job_id: string; job_title: string; org_name: string }> }> {
   try {
     const { user, admin } = await adminContext();
+    // Pakistan-first: never auto-pause during a declared internet disruption.
+    const { data: disruption } = await admin
+      .from("platform_settings")
+      .select("value")
+      .eq("key", "disruption_mode")
+      .maybeSingle();
+    if (disruption && (disruption.value as boolean) === true) {
+      return {
+        ok: false,
+        error: "Disruption mode is active: auto-pause is frozen to protect users during internet disruptions.",
+      };
+    }
     const { data, error } = await admin.rpc("auto_pause_stale_jobs", {
       inactivity_days: inactivityDays,
     });
