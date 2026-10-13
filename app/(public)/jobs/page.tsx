@@ -14,6 +14,7 @@ import {
   searchJobs,
   type JobSearchFilters,
 } from "../_lib/public-data";
+import { formatResponseBadge, getOrgsResponsiveness } from "@/lib/responsiveness";
 
 export const metadata: Metadata = {
   title: "Browse Jobs",
@@ -98,6 +99,15 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
     getLocations(db),
   ]);
 
+  // Ghost-job accountability: fetch employer response rates for visible jobs.
+  const orgIds = [...new Set(result.jobs.map((j) => j.org?.id).filter(Boolean) as string[])];
+  const responsiveness = await getOrgsResponsiveness(orgIds);
+  const badgeFor = (orgId: string | undefined) => {
+    if (!orgId) return null;
+    const r = responsiveness.get(orgId);
+    return r ? formatResponseBadge(r) : null;
+  };
+
   const activeFilterCount = Object.keys(values).filter(
     (k) => !["q", "sort", "page", "per_page"].includes(k) && values[k as keyof JobFilterValues],
   ).length;
@@ -145,7 +155,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
             <>
               <div className="grid gap-4">
                 {result.jobs.map((j) => (
-                  <JobCard key={j.id} job={j} />
+                  <JobCard key={j.id} job={j} responseBadge={badgeFor(j.org?.id)} />
                 ))}
               </div>
               <div className="mt-8">

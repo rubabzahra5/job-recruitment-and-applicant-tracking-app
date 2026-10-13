@@ -88,3 +88,32 @@ export async function setJobStatus(payload: Record<string, string>): Promise<Act
     return fail(e, "Failed to update job status.");
   }
 }
+
+/**
+ * Auto-pause stale jobs (ghost-job prevention).
+ * Pauses published jobs with no employer activity in the last N days.
+ * Uses the public.auto_pause_stale_jobs() SQL function.
+ */
+export async function autoPauseStaleJobs(inactivityDays = 30): Promise<ActionResult & { paused?: Array<{ job_id: string; job_title: string; org_name: string }> }> {
+  try {
+    const { user, admin } = await adminContext();
+    const { data, error } = await admin.rpc("auto_pause_stale_jobs", {
+      inactivity_days: inactivityDays,
+    });
+    if (error) throw new Error(error.message);
+    const paused = (data ?? []) as Array<{ job_id: string; job_title: string; org_name: string }>;
+    await writeAudit({
+      actorUserId: user.id,
+      action: "jobs.auto_paused_stale",
+      entityType: "job",
+      entityId: null,
+      orgId: null,
+      metadata: { inactivityDays, pausedCount: paused.length, paused },
+    });
+    revalidatePath("/control-center/jobs");
+    revalidatePath("/control-center");
+    return { ok: true, paused };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Failed to auto-pause stale jobs." };
+  }
+}

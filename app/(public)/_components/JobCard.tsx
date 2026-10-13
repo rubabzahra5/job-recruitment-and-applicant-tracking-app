@@ -9,7 +9,14 @@ import {
 } from "../_lib/public-data";
 
 /** Public job listing card — real DB data only, no hardcoded content. */
-export function JobCard({ job }: { job: PublicJob }) {
+export function JobCard({
+  job,
+  responseBadge,
+}: {
+  job: PublicJob;
+  /** Pre-computed "Responds to X% of applications" badge (ghost-job accountability). */
+  responseBadge?: string | null;
+}) {
   const locationLabel = job.workplace === "remote"
     ? "Remote"
     : job.location
@@ -72,6 +79,11 @@ export function JobCard({ job }: { job: PublicJob }) {
         <Badge tone="neutral">{WORKPLACE_LABELS[job.workplace] ?? job.workplace}</Badge>
         {job.is_fresh_graduate_ok && <Badge tone="success">Fresh graduates welcome</Badge>}
         {job.category && <Badge tone="neutral">{job.category.name}</Badge>}
+        {responseBadge && (
+          <Badge tone="success" title="Share of applications this employer actively reviewed in the last 90 days">
+            {responseBadge}
+          </Badge>
+        )}
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-600">
