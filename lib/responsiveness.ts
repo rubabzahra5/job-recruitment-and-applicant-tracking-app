@@ -53,10 +53,13 @@ export async function getOrgResponsiveness(
       })
       .sort((x, y) => x - y);
     const mid = Math.floor(hours.length / 2);
-    medianResponseHours =
-      hours.length % 2 === 0
-        ? Math.round((hours[mid - 1] + hours[mid]) / 2)
-        : Math.round(hours[mid]);
+    if (hours.length % 2 === 0) {
+      const a = hours[mid - 1] ?? 0;
+      const b = hours[mid] ?? 0;
+      medianResponseHours = Math.round((a + b) / 2);
+    } else {
+      medianResponseHours = Math.round(hours[mid] ?? 0);
+    }
   }
 
   return {
