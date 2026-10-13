@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/Table";
 import { getEnv, isEmailConfigured } from "@/lib/env";
 import { formatDateKarachi, timeAgo } from "@/lib/format";
+import { getAuditAlerts } from "@/lib/audit-alerts";
 
 export const metadata: Metadata = { title: "Control Center — Overview" };
 export const dynamic = "force-dynamic";
@@ -117,6 +118,9 @@ export default async function OverviewPage({
   );
   const operatingMode = settings.get("operating_mode") ?? "—";
 
+  // L4: Audit anomaly alerts (suspicious patterns in the last 24h).
+  const auditAlerts = await getAuditAlerts(24).catch(() => []);
+
   // System config checklist (honest: each item reports what it actually found).
   let envStatus: "ok" | "missing";
   let emailStatus: "configured" | "unconfigured";
@@ -177,6 +181,16 @@ export default async function OverviewPage({
           )}
         </CardContent>
       </Card>
+
+      {auditAlerts.length > 0 && (
+        <section aria-label="Security alerts">
+          {auditAlerts.map((alert, i) => (
+            <Alert key={i} tone={alert.severity === "high" ? "error" : "warning"}>
+              <strong>Security alert:</strong> {alert.message}
+            </Alert>
+          ))}
+        </section>
+      )}
 
       <section aria-label="Platform metrics" className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <Stat label="Organizations" value={orgs.length} />
