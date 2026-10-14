@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import dynamic from "next/dynamic";
+import dynamicImport from "next/dynamic";
 import {
   AdminDeniedError,
   adminPageGuard,
@@ -29,7 +29,7 @@ import { setOrgAccountStatus, setOrgVerification } from "./actions";
 
 // Dynamic import with SSR disabled: the dialog was causing a server-side
 // exception (digest 1909957213) during SSR. Loading it client-side only.
-const OrgFormDialog = dynamic(
+const OrgFormDialog = dynamicImport(
   () => import("./OrgFormDialog").then((m) => m.OrgFormDialog),
   { ssr: false, loading: () => null }
 );
