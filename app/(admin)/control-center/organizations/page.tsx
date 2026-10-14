@@ -32,7 +32,7 @@ const ACCOUNT_TONES: Record<string, "neutral" | "info" | "success" | "warning" |
   closed: "neutral",
 };
 
-/** Step 1: Full query + Table UI. No counts, filters, or action buttons yet. */
+/** Step 2: Added member/job counts. */
 export default async function OrganizationsPage() {
   let admin;
   try {
@@ -50,12 +50,35 @@ export default async function OrganizationsPage() {
   if (error) throw new Error(`Failed to load organizations: ${error.message}`);
   const orgs = data ?? [];
 
+  // Member + job counts for the visible rows (batched).
+  const orgIds = orgs.map((o: any) => o.id as string);
+  const [memberCounts, jobCounts] = await Promise.all([
+    (async () => {
+      const map = new Map<string, number>();
+      if (orgIds.length === 0) return map;
+      const { data: rows } = await admin
+        .from("organization_memberships")
+        .select("org_id")
+        .in("org_id", orgIds)
+        .eq("is_active", true);
+      for (const r of rows ?? []) map.set(r.org_id as string, (map.get(r.org_id as string) ?? 0) + 1);
+      return map;
+    })(),
+    (async () => {
+      const map = new Map<string, number>();
+      if (orgIds.length === 0) return map;
+      const { data: rows } = await admin.from("jobs").select("org_id").in("org_id", orgIds);
+      for (const r of rows ?? []) map.set(r.org_id as string, (map.get(r.org_id as string) ?? 0) + 1);
+      return map;
+    })(),
+  ]);
+
   return (
     <main className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Organizations</h1>
         <p className="mt-1 text-sm text-slate-600">
-          {orgs.length} total. (Step 1: table UI test)
+          {orgs.length} total. (Step 2: member/job counts test)
         </p>
       </div>
 
@@ -70,6 +93,8 @@ export default async function OrganizationsPage() {
                 <TableHeaderCell>Organization</TableHeaderCell>
                 <TableHeaderCell>Verification</TableHeaderCell>
                 <TableHeaderCell>Account</TableHeaderCell>
+                <TableHeaderCell>Members</TableHeaderCell>
+                <TableHeaderCell>Jobs</TableHeaderCell>
                 <TableHeaderCell>Created</TableHeaderCell>
               </TableRow>
             </TableHead>
@@ -95,6 +120,8 @@ export default async function OrganizationsPage() {
                       {o.account_status}
                     </Badge>
                   </TableCell>
+                  <TableCell>{memberCounts.get(o.id) ?? 0}</TableCell>
+                  <TableCell>{jobCounts.get(o.id) ?? 0}</TableCell>
                   <TableCell className="whitespace-nowrap text-slate-500">
                     {formatDateOnlyKarachi(o.created_at)}
                   </TableCell>
