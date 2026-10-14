@@ -49,7 +49,7 @@ export default async function UsersPage({
   // Base profile query with filters.
   let query = admin
     .from("profiles")
-    .select("id,email,display_name,is_active,created_at", { count: "exact" })
+    .select("id,email,display_name,phone,phone_verified,is_active,created_at", { count: "exact" })
     .order("created_at", { ascending: false });
   if (search) query = query.or(`email.ilike.%${search}%,display_name.ilike.%${search}%`);
   if (activeFilter === "active") query = query.eq("is_active", true);
@@ -70,6 +70,21 @@ export default async function UsersPage({
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / perPage));
 
   const visibleIds = profiles.map((p) => p.id as string);
+
+  // Detect potential duplicate accounts (same phone on multiple profiles)
+  const phones = profiles.map((p) => p.phone as string).filter(Boolean);
+  const { data: dupPhones } = phones.length > 0
+    ? await admin
+        .from("profiles")
+        .select("phone")
+        .in("phone", [...new Set(phones)])
+        .not("phone", "is", null)
+    : { data: [] as { phone: string }[] };
+  const phoneCounts = new Map<string, number>();
+  for (const r of dupPhones ?? []) {
+    phoneCounts.set(r.phone, (phoneCounts.get(r.phone) ?? 0) + 1);
+  }
+
   const [rolesRes, orgsRes, invitationsRes] = await Promise.all([
     visibleIds.length > 0
       ? admin.from("user_roles").select("user_id,role,org:organizations(name)").in("user_id", visibleIds)
@@ -140,6 +155,7 @@ export default async function UsersPage({
               <TableRow>
                 <TableHeaderCell>User</TableHeaderCell>
                 <TableHeaderCell>Roles</TableHeaderCell>
+                <TableHeaderCell>Verification</TableHeaderCell>
                 <TableHeaderCell>Status</TableHeaderCell>
                 <TableHeaderCell>Created</TableHeaderCell>
               </TableRow>
@@ -148,6 +164,8 @@ export default async function UsersPage({
               {profiles.map((p) => {
                 const id = p.id as string;
                 const grants = roleMap.get(id) ?? [];
+                const phone = p.phone as string | null;
+                const isDuplicate = phone && (phoneCounts.get(phone) ?? 0) > 1;
                 return (
                   <TableRow key={id}>
                     <TableCell>
@@ -155,6 +173,10 @@ export default async function UsersPage({
                         {(p.email as string) ?? "—"}
                       </Link>
                       <div className="text-xs text-slate-500">{(p.display_name as string) ?? ""}</div>
+                      {phone && <div className="text-xs text-slate-400">{phone}</div>}
+                      {isDuplicate && (
+                        <Badge tone="warning">possible duplicate</Badge>
+                      )}
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
@@ -164,6 +186,13 @@ export default async function UsersPage({
                             {g.role}{g.org ? ` · ${g.org}` : ""}
                           </Badge>
                         ))}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-1">
+                        <Badge tone={p.phone_verified ? "success" : "neutral"}>
+                          {p.phone_verified ? "✓ phone" : "phone unverified"}
+                        </Badge>
                       </div>
                     </TableCell>
                     <TableCell>
