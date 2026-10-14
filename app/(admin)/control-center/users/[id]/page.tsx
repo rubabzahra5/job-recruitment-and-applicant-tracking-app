@@ -72,7 +72,39 @@ export default async function UserDetailPage({
     admin.from("organizations").select("id,name").order("name").limit(200),
   ]);
 
+  // Candidate profile (if this user is a candidate)
+  const { data: candidateProfile } = await admin
+    .from("candidate_profiles")
+    .select("id,headline,bio,phone,city_id,experience_years,skills,linkedin_url,portfolio_url,cv_url")
+    .eq("user_id", id)
+    .maybeSingle();
+
+  const candidateProfileId = (candidateProfile?.id as string) ?? null;
+  const [{ data: applications }, { data: education }, { data: experience }] = candidateProfileId
+    ? await Promise.all([
+        admin
+          .from("applications")
+          .select("id,stage,submitted_at,jobs(title,organizations(name))")
+          .eq("user_id", id)
+          .order("submitted_at", { ascending: false })
+          .limit(10),
+        admin
+          .from("candidate_education")
+          .select("institution,degree,field,start_year,end_year")
+          .eq("profile_id", candidateProfileId)
+          .order("end_year", { ascending: false })
+          .limit(5),
+        admin
+          .from("candidate_experience")
+          .select("company,title,start_date,end_date,is_current")
+          .eq("profile_id", candidateProfileId)
+          .order("start_date", { ascending: false })
+          .limit(5),
+      ])
+    : [{ data: [] }, { data: [] }, { data: [] }];
+
   const isActive = profile.is_active as boolean;
+  const isCandidate = Boolean(candidateProfile);
 
   return (
     <main className="space-y-6">
@@ -130,6 +162,137 @@ export default async function UserDetailPage({
           This is your own administrator account. Self-suspension is blocked; revoking your own
           super_admin grant is allowed only if another active super admin exists.
         </Alert>
+      )}
+
+      {/* ── Profile overview ── */}
+      <Card className="reveal">
+        <CardHeader><CardTitle>Profile information</CardTitle></CardHeader>
+        <CardContent>
+          <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wider text-slate-500">Display name</dt>
+              <dd className="mt-1 text-sm font-medium text-slate-900">{(profile.display_name as string) ?? "—"}</dd>
+            </div>
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wider text-slate-500">Email</dt>
+              <dd className="mt-1 text-sm text-slate-900">{(profile.email as string) ?? "—"}</dd>
+            </div>
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wider text-slate-500">Phone</dt>
+              <dd className="mt-1 text-sm text-slate-900">
+                {(candidateProfile?.phone as string) ?? (profile.phone as string) ?? "—"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wider text-slate-500">Status</dt>
+              <dd className="mt-1">
+                <Badge tone={isActive ? "success" : "danger"}>{isActive ? "active" : "suspended"}</Badge>
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wider text-slate-500">Phone verified</dt>
+              <dd className="mt-1">
+                <Badge tone={profile.phone_verified ? "success" : "neutral"}>
+                  {profile.phone_verified ? "verified" : "unverified"}
+                </Badge>
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wider text-slate-500">Account created</dt>
+              <dd className="mt-1 text-sm text-slate-900">{formatDateKarachi(profile.created_at as string)}</dd>
+            </div>
+          </dl>
+          {isCandidate && (candidateProfile?.headline as string) && (
+            <div className="mt-4 border-t border-slate-100 pt-4">
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Headline</p>
+              <p className="mt-1 text-sm text-slate-900">{candidateProfile?.headline as string}</p>
+            </div>
+          )}
+          {isCandidate && (candidateProfile?.bio as string) && (
+            <div className="mt-3">
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Bio</p>
+              <p className="mt-1 text-sm leading-relaxed text-slate-700">{candidateProfile?.bio as string}</p>
+            </div>
+          )}
+          {isCandidate && Array.isArray(candidateProfile?.skills) && (candidateProfile.skills as string[]).length > 0 && (
+            <div className="mt-3">
+              <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Skills</p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {(candidateProfile.skills as string[]).map((s: string) => (
+                  <Badge key={s} tone="info">{s}</Badge>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ── Candidate-specific: applications, education, experience ── */}
+      {isCandidate && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card className="reveal">
+            <CardHeader><CardTitle>Job applications ({(applications ?? []).length})</CardTitle></CardHeader>
+            <CardContent>
+              {(applications ?? []).length === 0 ? (
+                <p className="text-sm text-slate-500">No applications submitted.</p>
+              ) : (
+                <div className="space-y-3">
+                  {(applications ?? []).map((a: any) => (
+                    <div key={a.id} className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50/50 px-3 py-2.5">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-slate-900">
+                          {a.jobs?.title ?? "Job"}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {a.jobs?.organizations?.name ?? ""} · {timeAgo(a.submitted_at)}
+                        </p>
+                      </div>
+                      <Badge tone="info">{a.stage}</Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <div className="space-y-6">
+            <Card className="reveal">
+              <CardHeader><CardTitle>Education</CardTitle></CardHeader>
+              <CardContent>
+                {(education ?? []).length === 0 ? (
+                  <p className="text-sm text-slate-500">No education listed.</p>
+                ) : (
+                  <div className="space-y-2.5">
+                    {(education ?? []).map((e: any, i: number) => (
+                      <div key={i} className="text-sm">
+                        <p className="font-medium text-slate-900">{e.degree} {e.field ? `in ${e.field}` : ""}</p>
+                        <p className="text-xs text-slate-500">{e.institution} · {e.start_year}–{e.end_year ?? "present"}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card className="reveal">
+              <CardHeader><CardTitle>Work experience</CardTitle></CardHeader>
+              <CardContent>
+                {(experience ?? []).length === 0 ? (
+                  <p className="text-sm text-slate-500">No experience listed.</p>
+                ) : (
+                  <div className="space-y-2.5">
+                    {(experience ?? []).map((e: any, i: number) => (
+                      <div key={i} className="text-sm">
+                        <p className="font-medium text-slate-900">{e.title}</p>
+                        <p className="text-xs text-slate-500">{e.company} · {e.is_current ? "current" : "past"}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       )}
 
       <Card>
