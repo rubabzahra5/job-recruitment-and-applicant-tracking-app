@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Suspense } from "react";
 import {
   AdminDeniedError,
   adminPageGuard,
+  firstParam,
+  getPagination,
 } from "@/app/(admin)/_components/admin-server";
 import { AdminDenied } from "@/app/(admin)/_components/AdminDenied";
+import { FilterBar, PaginationNav } from "@/app/(admin)/_components/filters";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import {
@@ -32,8 +36,13 @@ const ACCOUNT_TONES: Record<string, "neutral" | "info" | "success" | "warning" |
   closed: "neutral",
 };
 
-/** Step 2: Added member/job counts. */
-export default async function OrganizationsPage() {
+/** Step 3: Added filters + pagination. */
+export default async function OrganizationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
   let admin;
   try {
     ({ admin } = await adminPageGuard("/control-center/organizations"));
@@ -42,13 +51,24 @@ export default async function OrganizationsPage() {
     throw e;
   }
 
-  const { data, error } = await admin
-    .from("organizations")
-    .select("id,name,slug,verification_status,account_status,industry,created_at")
-    .order("created_at", { ascending: false });
+  const { page, perPage, from, to } = getPagination(params);
+  const search = (firstParam(params.q) ?? "").trim();
+  const verification = firstParam(params.verification) ?? "";
+  const account = firstParam(params.account) ?? "";
 
+  let query = admin
+    .from("organizations")
+    .select("id,name,slug,verification_status,account_status,industry,created_at", {
+      count: "exact",
+    })
+    .order("created_at", { ascending: false });
+  if (search) query = query.or(`name.ilike.%${search}%,slug.ilike.%${search}%`);
+  if (verification) query = query.eq("verification_status", verification);
+  if (account) query = query.eq("account_status", account);
+  const { data, count, error } = await query.range(from, to);
   if (error) throw new Error(`Failed to load organizations: ${error.message}`);
   const orgs = data ?? [];
+  const totalPages = Math.max(1, Math.ceil((count ?? 0) / perPage));
 
   // Member + job counts for the visible rows (batched).
   const orgIds = orgs.map((o: any) => o.id as string);
@@ -78,9 +98,36 @@ export default async function OrganizationsPage() {
       <div>
         <h1 className="text-2xl font-bold">Organizations</h1>
         <p className="mt-1 text-sm text-slate-600">
-          {orgs.length} total. (Step 2: member/job counts test)
+          {count ?? 0} total. (Step 3: filters + pagination test)
         </p>
       </div>
+
+      <Card>
+        <CardContent className="pt-4">
+          <Suspense>
+            <FilterBar
+              fields={[
+                { key: "q", label: "Search name/slug", type: "search", placeholder: "Acme…" },
+                {
+                  key: "verification",
+                  label: "Verification",
+                  type: "select",
+                  options: ["unverified", "pending", "verified", "rejected"].map((v) => ({
+                    value: v,
+                    label: v,
+                  })),
+                },
+                {
+                  key: "account",
+                  label: "Account status",
+                  type: "select",
+                  options: ["active", "suspended", "closed"].map((v) => ({ value: v, label: v })),
+                },
+              ]}
+            />
+          </Suspense>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -129,6 +176,11 @@ export default async function OrganizationsPage() {
               ))}
             </TableBody>
           </Table>
+          <div className="mt-4">
+            <Suspense>
+              <PaginationNav page={page} totalPages={totalPages} basePath="/control-center/organizations" />
+            </Suspense>
+          </div>
         </CardContent>
       </Card>
     </main>
