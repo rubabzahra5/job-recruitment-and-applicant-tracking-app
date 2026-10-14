@@ -22,7 +22,6 @@ import {
   TableRow,
 } from "@/components/ui/Table";
 import { formatDateKarachi, formatDateOnlyKarachi } from "@/lib/format";
-import { OrgFormDialog } from "../OrgFormDialog";
 import { AddMemberDialog } from "./AddMemberDialog";
 import {
   removeOrgMember,
@@ -114,20 +113,7 @@ export default async function OrganizationDetailPage({
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
-            <OrgFormDialog
-              mode="edit"
-              orgId={id}
-              triggerLabel="Edit"
-              initial={{
-                name: org.name as string,
-                slug: org.slug as string,
-                industry: (org.industry as string) ?? "",
-                website: (org.website as string) ?? "",
-                contact_email: (org.contact_email as string) ?? "",
-                contact_phone: (org.contact_phone as string) ?? "",
-                about: (org.about as string) ?? "",
-              }}
-            />
+            {/* Edit via separate page (dialog removed due to SSR crash) */}
             {vs !== "verified" && (
               <NoteActionButton
                 title="Verify organization"
