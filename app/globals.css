@@ -8,8 +8,77 @@
   --color-brand-600: #0f62c4;
   --color-brand-700: #0b4f9f;
   --color-brand-900: #0a2f5c;
+
+  --animate-fade-in: fade-in 0.6s ease-out both;
+  --animate-slide-up: slide-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-float-slow: float 9s ease-in-out infinite;
 }
 
 body {
   font-family: var(--font-sans);
+}
+
+/* ── Entrance animations ─────────────────────────────────── */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-14px); }
+}
+
+/* Staggered entrance: add .reveal to children, set --d for delay */
+.reveal {
+  opacity: 0;
+  animation: slide-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: var(--d, 0ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; animation: none; }
+  .animate-float, .animate-float-slow { animation: none; }
+}
+
+/* ── Background effects ──────────────────────────────────── */
+/* Subtle dot grid pattern */
+.bg-dots {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+.bg-dots-dark {
+  background-image: radial-gradient(rgba(11, 79, 159, 0.08) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* Diagonal texture for light sections */
+.bg-diagonal {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 12px,
+    rgba(11, 79, 159, 0.025) 12px,
+    rgba(11, 79, 159, 0.025) 24px
+  );
+}
+
+/* ── Card hover lift (professional, subtle) ───────────────── */
+.card-lift {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.card-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px -12px rgba(11, 79, 159, 0.25);
+}
+
+/* ── Gradient text ───────────────────────────────────────── */
+.text-gradient {
+  background: linear-gradient(120deg, #0f62c4, #2dd4bf);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
