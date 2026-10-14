@@ -24,6 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/Table";
 import { formatDateOnlyKarachi } from "@/lib/format";
+// TEMP: OrgFormDialog removed for bisect
 import { setOrgAccountStatus, setOrgVerification } from "./actions";
 
 export const metadata: Metadata = { title: "Control Center — Organizations" };
@@ -106,12 +107,7 @@ export default async function OrganizationsPage({
             (public queries filter on account_status = active).
           </p>
         </div>
-        <Link
-          href="/control-center/organizations/new"
-          className="inline-flex h-9 items-center rounded-md bg-brand-700 px-4 text-sm font-medium text-white hover:bg-brand-800"
-        >
-          Create organization
-        </Link>
+        {/* TEMP: dialog removed for bisect */}
       </div>
 
       <Card>
