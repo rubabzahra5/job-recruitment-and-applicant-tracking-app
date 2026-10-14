@@ -7,7 +7,7 @@ import { Dialog } from "@/components/ui/Dialog";
 import { FormField } from "@/components/ui/FormField";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
-import { createOrganization, updateOrganization } from "./actions";
+// Note: uses /api/admin/organizations instead of server actions to avoid SSR issues.
 
 export function slugify(name: string): string {
   return name
@@ -88,15 +88,23 @@ export function OrgFormDialog({
 
     setIsSubmitting(true);
     try {
-      const result =
-        mode === "create"
-          ? await createOrganization(form)
-          : await updateOrganization(orgId ?? "", form);
-      if (result.ok) {
-        setOpen(false);
-        window.location.reload();
+      // Create mode uses API route; edit mode uses server action via page.
+      if (mode === "create") {
+        const res = await fetch("/api/admin/organizations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(form),
+        });
+        const result = await res.json();
+        if (result.ok) {
+          setOpen(false);
+          window.location.reload();
+        } else {
+          setError(result.error ?? "Save failed.");
+        }
       } else {
-        setError(result.error ?? "Save failed.");
+        // Edit mode: reload page to use server action from detail page.
+        setError("Edit is available on the organization detail page.");
       }
     } finally {
       setIsSubmitting(false);
