@@ -5,26 +5,6 @@ import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import { createClient } from "@/lib/supabase/client";
 
-const NAV: { href: string; label: string; icon: React.ReactNode; section?: string }[] = [
-  { href: "/control-center", label: "Overview", icon: <IconGrid />, section: "Monitor" },
-  { href: "/control-center/approvals", label: "Approvals", icon: <IconCheck /> },
-  { href: "/control-center/reports", label: "Reports", icon: <IconChart /> },
-  { href: "/control-center/audit-logs", label: "Audit Logs", icon: <IconList /> },
-  { href: "/control-center/notifications", label: "Notifications", icon: <IconBell /> },
-  { href: "/control-center/organizations", label: "Organizations", icon: <IconBuilding />, section: "Manage" },
-  { href: "/control-center/users", label: "Users", icon: <IconUsers /> },
-  { href: "/control-center/roles", label: "Roles", icon: <IconKey /> },
-  { href: "/control-center/jobs", label: "Jobs", icon: <IconBriefcase /> },
-  { href: "/control-center/applications", label: "Applications", icon: <IconDoc /> },
-  { href: "/control-center/candidates", label: "Candidates", icon: <IconUser /> },
-  { href: "/control-center/interviews", label: "Interviews", icon: <IconCalendar /> },
-  { href: "/control-center/offers", label: "Offers", icon: <IconAward /> },
-  { href: "/control-center/categories", label: "Categories", icon: <IconTag />, section: "Configure" },
-  { href: "/control-center/locations", label: "Locations", icon: <IconPin /> },
-  { href: "/control-center/settings", label: "Settings", icon: <IconCog /> },
-  { href: "/control-center/security", label: "Security", icon: <IconShield /> },
-];
-
 /* ── Minimal SVG icons (stroke style, consistent) ── */
 function iconWrap(path: React.ReactNode) {
   return (
@@ -50,6 +30,28 @@ const IconTag = () => iconWrap(<><path d="M3 3h6l8 8-6 6-8-8z" strokeLinejoin="r
 const IconPin = () => iconWrap(<><path d="M10 17s5-4.5 5-9a5 5 0 10-10 0c0 4.5 5 9 5 9z" strokeLinejoin="round" /><circle cx="10" cy="8" r="1.8" /></>);
 const IconCog = () => iconWrap(<><circle cx="10" cy="10" r="2.5" /><path d="M10 3v2.5M10 14.5V17M3 10h2.5M14.5 10H17M5.4 5.4l1.8 1.8M12.8 12.8l1.8 1.8M14.6 5.4l-1.8 1.8M7.2 12.8l-1.8 1.8" strokeLinecap="round" /></>);
 const IconShield = () => iconWrap(<><path d="M10 3l6 2v5c0 4-2.5 6.5-6 7-3.5-.5-6-3-6-7V5z" strokeLinejoin="round" /><path d="M7.5 10l2 2 3.5-4" strokeLinecap="round" strokeLinejoin="round" /></>);
+
+const NAV: { href: string; label: string; icon: React.ReactNode; section?: string }[] = [
+  { href: "/control-center", label: "Overview", icon: <IconGrid />, section: "Monitor" },
+  { href: "/control-center/approvals", label: "Approvals", icon: <IconCheck /> },
+  { href: "/control-center/reports", label: "Reports", icon: <IconChart /> },
+  { href: "/control-center/audit-logs", label: "Audit Logs", icon: <IconList /> },
+  { href: "/control-center/notifications", label: "Notifications", icon: <IconBell /> },
+  { href: "/control-center/organizations", label: "Organizations", icon: <IconBuilding />, section: "Manage" },
+  { href: "/control-center/users", label: "Users", icon: <IconUsers /> },
+  { href: "/control-center/roles", label: "Roles", icon: <IconKey /> },
+  { href: "/control-center/jobs", label: "Jobs", icon: <IconBriefcase /> },
+  { href: "/control-center/applications", label: "Applications", icon: <IconDoc /> },
+  { href: "/control-center/candidates", label: "Candidates", icon: <IconUser /> },
+  { href: "/control-center/interviews", label: "Interviews", icon: <IconCalendar /> },
+  { href: "/control-center/offers", label: "Offers", icon: <IconAward /> },
+  { href: "/control-center/categories", label: "Categories", icon: <IconTag />, section: "Configure" },
+  { href: "/control-center/locations", label: "Locations", icon: <IconPin /> },
+  { href: "/control-center/settings", label: "Settings", icon: <IconCog /> },
+  { href: "/control-center/security", label: "Security", icon: <IconShield /> },
+];
+
+/* ── Minimal SVG icons (stroke style, consistent) ── */
 
 function isActive(pathname: string, href: string): boolean {
   return pathname === href || (href !== "/control-center" && pathname.startsWith(`${href}/`));
