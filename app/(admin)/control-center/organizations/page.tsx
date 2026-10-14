@@ -178,7 +178,7 @@ export default async function OrganizationsPage({
           </Table>
           <div className="mt-4">
             <Suspense>
-              <PaginationNav page={page} totalPages={totalPages} basePath="/control-center/organizations" />
+              <PaginationNav page={page} totalPages={totalPages} />
             </Suspense>
           </div>
         </CardContent>
