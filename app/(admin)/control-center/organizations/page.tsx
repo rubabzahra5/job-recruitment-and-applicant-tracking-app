@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
+import dynamic from "next/dynamic";
 import {
   AdminDeniedError,
   adminPageGuard,
@@ -24,8 +25,14 @@ import {
   TableRow,
 } from "@/components/ui/Table";
 import { formatDateOnlyKarachi } from "@/lib/format";
-import { OrgFormDialog } from "./OrgFormDialog";
 import { setOrgAccountStatus, setOrgVerification } from "./actions";
+
+// Dynamic import with SSR disabled: the dialog was causing a server-side
+// exception (digest 1909957213) during SSR. Loading it client-side only.
+const OrgFormDialog = dynamic(
+  () => import("./OrgFormDialog").then((m) => m.OrgFormDialog),
+  { ssr: false, loading: () => null }
+);
 
 export const metadata: Metadata = { title: "Control Center — Organizations" };
 export const dynamic = "force-dynamic";
