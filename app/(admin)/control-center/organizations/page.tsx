@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import dynamicImport from "next/dynamic";
 import {
   AdminDeniedError,
   adminPageGuard,
@@ -26,13 +25,6 @@ import {
 } from "@/components/ui/Table";
 import { formatDateOnlyKarachi } from "@/lib/format";
 import { setOrgAccountStatus, setOrgVerification } from "./actions";
-
-// Dynamic import with SSR disabled: the dialog was causing a server-side
-// exception (digest 1909957213) during SSR. Loading it client-side only.
-const OrgFormDialog = dynamicImport(
-  () => import("./OrgFormDialog").then((m) => m.OrgFormDialog),
-  { ssr: false, loading: () => null }
-);
 
 export const metadata: Metadata = { title: "Control Center — Organizations" };
 export const dynamic = "force-dynamic";
@@ -114,7 +106,12 @@ export default async function OrganizationsPage({
             (public queries filter on account_status = active).
           </p>
         </div>
-        <OrgFormDialog mode="create" triggerLabel="Create organization" />
+        <Link
+          href="/control-center/organizations/new"
+          className="inline-flex h-9 items-center rounded-md bg-brand-700 px-4 text-sm font-medium text-white hover:bg-brand-800"
+        >
+          Create organization
+        </Link>
       </div>
 
       <Card>
