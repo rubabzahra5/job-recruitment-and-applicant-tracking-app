@@ -8,6 +8,7 @@ import { computeProfileCompletion } from "@/app/(candidate)/_lib/profile-complet
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Alert } from "@/components/ui/Alert";
+import { CVUploadCard } from "./_components/CVUploadCard";
 import {
   ContactForm,
   SummaryForm,
@@ -73,6 +74,8 @@ export default async function CandidateProfilePage() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
+          <CVUploadCard hasCurrentCv={(cvDocs?.length ?? 0) > 0} />
+
           <Card>
             <CardHeader>
               <CardTitle>Contact details</CardTitle>

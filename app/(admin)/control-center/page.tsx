@@ -193,38 +193,42 @@ export default async function OverviewPage({
       )}
 
       <section aria-label="Platform metrics" className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <Stat label="Organizations" value={orgs.length} />
+        <Stat label="Organizations" value={orgs.length} hint="Companies registered on the platform" />
         <Stat
           label="Pending org approvals"
           value={orgs.filter((o) => o.verification_status === "pending").length}
+          hint="Companies waiting for you to verify them"
         />
-        <Stat label="Internal users" value={internalUserIds.size} hint="Users with org-scoped roles" />
+        <Stat label="Internal users" value={internalUserIds.size} hint="Staff members (HR, recruiters) at companies" />
         <Stat
           label="Active accounts"
           value={profiles.filter((p) => p.is_active).length}
-          hint={`${profiles.filter((p) => !p.is_active).length} suspended`}
+          hint={`${profiles.filter((p) => !p.is_active).length} suspended · People who can log in`}
         />
-        <Stat label="Candidates" value={(candidatesRes.data ?? []).length} />
+        <Stat label="Candidates" value={(candidatesRes.data ?? []).length} hint="Job seekers with profiles" />
         <Stat
           label="Active vacancies"
           value={jobs.filter((j) => j.status === "published").length}
+          hint="Jobs visible to job seekers right now"
         />
-        <Stat label="Draft vacancies" value={jobs.filter((j) => j.status === "draft").length} />
+        <Stat label="Draft vacancies" value={jobs.filter((j) => j.status === "draft").length} hint="Jobs being written, not yet published" />
         <Stat
           label="Pending job approvals"
           value={jobs.filter((j) => j.status === "pending_review").length}
+          hint="Jobs waiting for your approval to go live"
         />
-        <Stat label="Total applications" value={apps.length} />
+        <Stat label="Total applications" value={apps.length} hint="All job applications submitted" />
         <Stat
           label="Interviews scheduled"
           value={interviews.filter((i) => i.status === "scheduled").length}
-          hint="Upcoming"
+          hint="Upcoming interviews"
         />
         <Stat
           label="Offers pending approval"
           value={offers.filter((o) => o.status === "pending_approval").length}
+          hint="Job offers waiting for approval"
         />
-        <Stat label="Hires" value={(hiresRes.data ?? []).length} />
+        <Stat label="Hires" value={(hiresRes.data ?? []).length} hint="Candidates who got hired" />
       </section>
 
       {/* Phase 2: Free-tier headroom monitor — alerts before hitting Supabase/Vercel limits. */}
