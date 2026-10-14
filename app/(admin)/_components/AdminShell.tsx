@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import * as React from "react";
 import { createClient } from "@/lib/supabase/client";
+import { LogoMark } from "@/components/Logo";
 
 /* ── Minimal SVG icons (stroke style, consistent) ── */
 function iconWrap(path: React.ReactNode) {
@@ -102,9 +103,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         {/* Brand header */}
         <div className="border-b border-white/10 px-5 py-5">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-brand-600 to-teal-500 text-lg font-extrabold text-white">
-              T
-            </div>
+            <LogoMark className="h-9 w-9" />
             <div>
               <p className="text-base font-bold text-white">TalentBridge</p>
               <p className="text-[11px] font-semibold uppercase tracking-widest text-teal-400">

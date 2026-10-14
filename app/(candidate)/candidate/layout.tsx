@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
 import { PortalNav } from "@/app/(candidate)/_components/PortalNav";
 import { SignOutButton } from "@/app/(candidate)/_components/SignOutButton";
+import { Logo } from "@/components/Logo";
 
 export const metadata: Metadata = { title: "Candidate Portal" };
 
@@ -22,8 +23,8 @@ export default async function CandidateLayout({
     <div className="flex min-h-screen flex-col bg-slate-50">
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-          <Link href="/candidate" className="flex items-center gap-2">
-            <span className="text-lg font-bold text-brand-700">TalentBridge</span>
+          <Link href="/candidate" className="flex items-center gap-2" aria-label="TalentBridge candidate home">
+            <Logo className="h-8 w-8" />
             <span className="rounded bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
               Candidate
             </span>

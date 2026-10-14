@@ -3,6 +3,7 @@ import Link from "next/link";
 import { EmployerNav } from "../_components/EmployerNav";
 import { OrgSwitcher } from "../_components/OrgSwitcher";
 import { getOrgContext, NoOrganizationError } from "../_lib/org";
+import { Logo } from "@/components/Logo";
 
 /**
  * Employer route group (/employer/*).
@@ -26,8 +27,8 @@ export default function EmployerLayout({ children }: { children: React.ReactNode
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4">
           <div className="flex items-center">
-            <Link href="/employer" className="text-lg font-bold text-brand-700">
-              TalentBridge
+            <Link href="/employer" aria-label="TalentBridge employer home">
+              <Logo className="h-8 w-8" />
             </Link>
             <span className="ml-3 rounded bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
               Employer
