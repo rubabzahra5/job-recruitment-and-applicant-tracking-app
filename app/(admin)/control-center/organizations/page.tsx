@@ -100,11 +100,20 @@ export default async function OrganizationsPage({
 
   return (
     <main className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Organizations</h1>
-        <p className="mt-1 text-sm text-slate-600">
-          {count ?? 0} total. (Step 4: action buttons test)
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Organizations</h1>
+          <p className="mt-1 text-sm text-slate-600">
+            {count ?? 0} total. Suspending an org removes its jobs from public listings
+            (public queries filter on account_status = active).
+          </p>
+        </div>
+        <Link
+          href="/control-center/organizations/new"
+          className="inline-flex h-9 items-center rounded-md bg-brand-700 px-4 text-sm font-medium text-white hover:bg-brand-800"
+        >
+          Create organization
+        </Link>
       </div>
 
       <Card>
