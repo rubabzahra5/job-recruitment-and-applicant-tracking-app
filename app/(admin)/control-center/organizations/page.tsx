@@ -8,6 +8,10 @@ import {
   getPagination,
 } from "@/app/(admin)/_components/admin-server";
 import { AdminDenied } from "@/app/(admin)/_components/AdminDenied";
+import {
+  ConfirmActionButton,
+  NoteActionButton,
+} from "@/app/(admin)/_components/action-buttons";
 import { FilterBar, PaginationNav } from "@/app/(admin)/_components/filters";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -20,6 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/Table";
 import { formatDateOnlyKarachi } from "@/lib/format";
+import { setOrgAccountStatus, setOrgVerification } from "./actions";
 
 export const metadata: Metadata = { title: "Control Center — Organizations" };
 export const dynamic = "force-dynamic";
@@ -98,7 +103,7 @@ export default async function OrganizationsPage({
       <div>
         <h1 className="text-2xl font-bold">Organizations</h1>
         <p className="mt-1 text-sm text-slate-600">
-          {count ?? 0} total. (Step 3: filters + pagination test)
+          {count ?? 0} total. (Step 4: action buttons test)
         </p>
       </div>
 
@@ -143,6 +148,9 @@ export default async function OrganizationsPage({
                 <TableHeaderCell>Members</TableHeaderCell>
                 <TableHeaderCell>Jobs</TableHeaderCell>
                 <TableHeaderCell>Created</TableHeaderCell>
+                <TableHeaderCell>
+                  <span className="sr-only">Actions</span>
+                </TableHeaderCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -171,6 +179,51 @@ export default async function OrganizationsPage({
                   <TableCell>{jobCounts.get(o.id) ?? 0}</TableCell>
                   <TableCell className="whitespace-nowrap text-slate-500">
                     {formatDateOnlyKarachi(o.created_at)}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-2">
+                      {(o.verification_status === "pending") && (
+                        <>
+                          <NoteActionButton
+                            title="Verify organization"
+                            description={`Approve ${o.name} as a verified employer.`}
+                            confirmLabel="Verify"
+                            buttonLabel="Verify"
+                            payload={{ id: o.id, status: "verified" }}
+                            action={setOrgVerification}
+                          />
+                          <NoteActionButton
+                            title="Reject verification"
+                            danger
+                            confirmLabel="Reject"
+                            buttonLabel="Reject"
+                            payload={{ id: o.id, status: "rejected" }}
+                            action={setOrgVerification}
+                          />
+                        </>
+                      )}
+                      {o.account_status === "active" ? (
+                        <NoteActionButton
+                          title="Suspend organization"
+                          description="Suspended orgs disappear from public job listings immediately."
+                          danger
+                          confirmLabel="Suspend"
+                          buttonLabel="Suspend"
+                          payload={{ id: o.id, status: "suspended" }}
+                          action={setOrgAccountStatus}
+                        />
+                      ) : (
+                        o.account_status === "suspended" && (
+                          <NoteActionButton
+                            title="Reactivate organization"
+                            confirmLabel="Reactivate"
+                            buttonLabel="Reactivate"
+                            payload={{ id: o.id, status: "active" }}
+                            action={setOrgAccountStatus}
+                          />
+                        )
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
