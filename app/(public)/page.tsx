@@ -209,7 +209,7 @@ export default async function HomePage() {
                 preload="metadata"
                 poster="/images/hero-bridge-3d.webp"
                 aria-label="Animated 3D glass bridge"
-                className="h-auto w-full rounded-2xl"
+                className="h-auto w-full rounded-2xl mix-blend-screen"
               >
                 <source src="/videos/hero-bridge.mp4" type="video/mp4" />
               </video>
