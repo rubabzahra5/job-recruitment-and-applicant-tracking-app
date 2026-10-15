@@ -25,7 +25,6 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { CompanyCard } from "@/components/ui/CompanyCard";
-import { DataTable } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FormField } from "@/components/ui/FormField";
 import { IconTile } from "@/components/ui/IconTile";
@@ -37,7 +36,7 @@ import { StatCard } from "@/components/ui/StatCard";
 import { StatusPill, stageTone } from "@/components/ui/StatusPill";
 import { Toast } from "@/components/ui/Toast";
 import { formatLabel } from "@/lib/format-label";
-import { PaginationDemo, TabsDemo, PipelineCandidateCardPreview } from "./demos";
+import { PaginationDemo, TabsDemo, PipelineCandidateCardPreview, DataTableDemo } from "./demos";
 import { BridgeDivider, WaveDivider } from "@/components/ui/dividers";
 import { CITY_LANDMARKS } from "@/components/ui/CityLandmarks";
 import {
@@ -472,21 +471,7 @@ export default function DesignSystemPage() {
 
       {/* Data table */}
       <Section id="datatable" title="Data table" blurb="Sticky header, row hover, sortable columns, density toggle, tabular numbers.">
-        <DataTable
-          caption="Demo candidates"
-          columns={[
-            { key: "name", header: "Candidate", render: (r: { name: string }) => <span className="font-medium text-slate-900">{r.name}</span>, sortable: true, sortValue: (r) => r.name },
-            { key: "stage", header: "Stage", render: (r: { stage: string; tone: "blue" | "violet" | "amber" }) => <StatusPill tone={r.tone}>{r.stage}</StatusPill> },
-            { key: "score", header: "Score", render: (r: { score: number }) => `${r.score}/10`, sortable: true, sortValue: (r) => r.score, className: "text-end" },
-            { key: "applied", header: "Applied", render: (r: { applied: string }) => r.applied },
-          ]}
-          rows={[
-            { name: "Hira Shahid", stage: "Applied", tone: "blue" as const, score: 8, applied: "11-Oct-2026" },
-            { name: "Danish Iqbal", stage: "Screening", tone: "violet" as const, score: 7, applied: "10-Oct-2026" },
-            { name: "Sana Malik", stage: "Interview", tone: "amber" as const, score: 9, applied: "09-Oct-2026" },
-          ]}
-          rowKey={(r) => r.name}
-        />
+        <DataTableDemo />
       </Section>
 
       {/* Pipeline candidate card */}
