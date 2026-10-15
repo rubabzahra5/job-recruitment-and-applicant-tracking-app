@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Logo } from "@/components/Logo";
+import { WaveDivider } from "@/components/ui/dividers";
 
 const SEEKER_LINKS = [
   { href: "/jobs", label: "Browse jobs" },
@@ -20,7 +21,9 @@ const COMPANY_LINKS = [
 
 export function SiteFooter() {
   return (
-    <footer className="bg-[#0e2a47] text-slate-300">
+    <>
+      <WaveDivider className="bg-white text-[#0e2a47]" />
+      <footer className="bg-[#0e2a47] text-slate-300">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 md:grid-cols-4">
         <div>
           <Logo dark />
@@ -81,5 +84,6 @@ export function SiteFooter() {
         </div>
       </div>
     </footer>
+    </>
   );
 }
