@@ -17,6 +17,7 @@ import {
   GetHiredIllustration,
 } from "@/components/ui/HowItWorks";
 import { CountUp } from "./_components/CountUp";
+import { ScrollVideo } from "./_components/ScrollVideo";
 import { categoryIcon } from "./_components/category-icons";
 import {
   getCategories,
@@ -201,18 +202,11 @@ export default async function HomePage() {
           {/* Floating 3D bridge video + glass job previews */}
           <div className="reveal relative hidden md:block" style={{ "--d": "200ms" } as React.CSSProperties}>
             <div className="animate-float">
-              <video
-                autoPlay
-                muted
-                loop
-                playsInline
-                preload="metadata"
+              <ScrollVideo
+                src="/videos/hero-bridge.mp4"
                 poster="/images/hero-bridge-3d.webp"
-                aria-label="Animated 3D glass bridge"
-                className="h-auto w-full rounded-2xl mix-blend-screen"
-              >
-                <source src="/videos/hero-bridge.mp4" type="video/mp4" />
-              </video>
+                label="Animated 3D glass bridge"
+              />
               <div className="mt-4 space-y-2">
                 {latest.jobs.slice(0, 2).map((j) => (
                   <Link
