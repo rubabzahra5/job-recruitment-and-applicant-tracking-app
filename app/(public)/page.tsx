@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, Banknote, MapPin, Search, ShieldCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/Button";
@@ -16,7 +17,6 @@ import {
   CreateProfileIllustration,
   GetHiredIllustration,
 } from "@/components/ui/HowItWorks";
-import { BridgeIllustration } from "@/components/ui/Illustrations";
 import { CountUp } from "./_components/CountUp";
 import { categoryIcon } from "./_components/category-icons";
 import {
@@ -199,11 +199,18 @@ export default async function HomePage() {
             )}
           </div>
 
-          {/* Floating glass job previews + bridge arc */}
+          {/* Floating 3D bridge + glass job previews */}
           <div className="reveal relative hidden md:block" style={{ "--d": "200ms" } as React.CSSProperties}>
-            <div className="animate-float rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-              <BridgeIllustration className="h-auto w-full" />
-              <div className="mt-4 space-y-2">
+            <div className="animate-float overflow-hidden rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm">
+              <Image
+                src="/images/hero-bridge-3d.webp"
+                alt="3D glass bridge illustration"
+                width={1200}
+                height={800}
+                priority
+                className="h-auto w-full"
+              />
+              <div className="space-y-2 p-6 pt-4">
                 {latest.jobs.slice(0, 2).map((j) => (
                   <Link
                     key={j.id}
