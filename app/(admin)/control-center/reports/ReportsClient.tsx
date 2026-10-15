@@ -76,7 +76,7 @@ export function ReportsClient() {
           </div>
           <p className="mt-2 text-xs text-slate-500">
             Applies to created/submitted dates. Exports are capped at 5,000 rows and every
-            download is written to audit_logs (report.exported).
+            download is recorded in the audit log.
           </p>
         </CardContent>
       </Card>

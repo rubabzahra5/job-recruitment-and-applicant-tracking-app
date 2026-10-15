@@ -54,14 +54,18 @@ export interface AvatarProps {
   name: string;
   size?: keyof typeof SIZES;
   className?: string;
-  /** "solid" (default) or "gradient" — deterministic per name. */
+  /**
+   * "gradient" (default, premium) or "solid".
+   * Solid is used automatically at xs size for legibility.
+   */
   variant?: "solid" | "gradient";
 }
 
-export function Avatar({ name, size = "sm", className = "", variant = "solid" }: AvatarProps) {
+export function Avatar({ name, size = "sm", className = "", variant }: AvatarProps) {
+  const resolved = variant ?? (size === "xs" ? "solid" : "gradient");
   const idx = hashName(name) % PALETTE.length;
   const bg =
-    variant === "gradient"
+    resolved === "gradient"
       ? `bg-gradient-to-br ${GRADIENTS[idx]}`
       : PALETTE[idx];
   return (

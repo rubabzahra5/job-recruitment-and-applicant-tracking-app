@@ -15,16 +15,29 @@ import {
   Stethoscope,
   Truck,
   Users,
+  X,
 } from "lucide-react";
+
+import { CandidateCard } from "@/app/(employer)/_components/CandidateCard";
 
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { CompanyCard } from "@/components/ui/CompanyCard";
+import { DataTable } from "@/components/ui/DataTable";
+import { EmptyState } from "@/components/ui/EmptyState";
+import { FormField } from "@/components/ui/FormField";
 import { IconTile } from "@/components/ui/IconTile";
 import { Input } from "@/components/ui/Input";
+import { JobCard } from "@/components/ui/JobCard";
 import { Select } from "@/components/ui/Select";
-import { StatusPill } from "@/components/ui/StatusPill";
+import { Skeleton, SkeletonCard, SkeletonTable } from "@/components/ui/Skeleton";
+import { StatCard } from "@/components/ui/StatCard";
+import { StatusPill, stageTone } from "@/components/ui/StatusPill";
+import { Toast } from "@/components/ui/Toast";
+import { formatLabel } from "@/lib/format-label";
+import { PaginationDemo, TabsDemo, PipelineCandidateCardPreview } from "./demos";
 import { BridgeDivider, WaveDivider } from "@/components/ui/dividers";
 import { CITY_LANDMARKS } from "@/components/ui/CityLandmarks";
 import {
@@ -97,6 +110,8 @@ function Section({ id, title, blurb, children }: { id: string; title: string; bl
     </section>
   );
 }
+
+/* Interactive demos live in ./demos.tsx (client component). */
 
 export default function DesignSystemPage() {
   return (
@@ -321,30 +336,32 @@ export default function DesignSystemPage() {
       </Section>
 
       {/* Status pills + badges */}
-      <Section id="status" title="Status pills & badges" blurb="Soft fill + solid dot. Emerald = verified/hired, amber = pending, rose = rejected, blue = info, slate = neutral.">
+      <Section id="status" title="Status pills & badges" blurb="Soft fill + solid dot. Text always -700/-800 shade (WCAG AA on white). Pipeline stages each get their own hue; color is never the only signal — labels always present.">
         <Card>
           <CardContent className="flex flex-wrap gap-3 pt-6">
-            <StatusPill tone="emerald">Verified</StatusPill>
-            <StatusPill tone="emerald" dotPulse>Hired</StatusPill>
-            <StatusPill tone="amber">Screening</StatusPill>
-            <StatusPill tone="amber" dotPulse>Interview scheduled</StatusPill>
-            <StatusPill tone="rose">Rejected</StatusPill>
             <StatusPill tone="blue">Applied</StatusPill>
-            <StatusPill tone="teal">Offer sent</StatusPill>
+            <StatusPill tone="violet">Screening</StatusPill>
+            <StatusPill tone="teal">Shortlisted</StatusPill>
+            <StatusPill tone="amber">Interview</StatusPill>
+            <StatusPill tone="amber" dotPulse>Interview scheduled</StatusPill>
+            <StatusPill tone="indigo">Offer sent</StatusPill>
+            <StatusPill tone="emerald">Hired</StatusPill>
+            <StatusPill tone="rose">Rejected</StatusPill>
             <StatusPill tone="slate">Draft</StatusPill>
           </CardContent>
         </Card>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <Badge tone="success">active</Badge>
-          <Badge tone="info">candidate</Badge>
-          <Badge tone="warning">possible duplicate</Badge>
-          <Badge tone="danger">super_admin</Badge>
-          <Badge tone="neutral">suspended</Badge>
+        <p className="mt-4 text-sm font-medium text-slate-700">DB values are humanized via <code className="rounded bg-slate-100 px-1 font-mono text-xs">formatLabel()</code> — never render raw enums:</p>
+        <div className="mt-2 flex flex-wrap gap-3">
+          <Badge tone="success">{formatLabel("active")}</Badge>
+          <Badge tone="info">{formatLabel("candidate")}</Badge>
+          <Badge tone="warning">{formatLabel("possible_duplicate")}</Badge>
+          <Badge tone="danger">{formatLabel("super_admin")}</Badge>
+          <Badge tone="neutral">{formatLabel("suspended")}</Badge>
         </div>
       </Section>
 
       {/* Buttons & inputs */}
-      <Section id="controls" title="Buttons & inputs" blurb="One button language: 5 variants, 3 sizes, loading state. 44px touch targets on interactive controls.">
+      <Section id="controls" title="Buttons & inputs" blurb="One button language: 5 variants, 3 sizes. Loading shows a spinner (keeps label); disabled is dimmed and non-interactive. Ghost has hover bg + focus ring. Inputs always get a visible label, helper text, and an error state with rose border + message.">
         <Card>
           <CardContent className="space-y-6 pt-6">
             <div className="flex flex-wrap items-center gap-3">
@@ -358,17 +375,25 @@ export default function DesignSystemPage() {
               <Button size="sm">Small</Button>
               <Button size="md">Medium</Button>
               <Button size="lg">Large</Button>
-              <Button isLoading>Loading</Button>
+              <Button isLoading>Saving…</Button>
               <Button disabled>Disabled</Button>
             </div>
-            <div className="grid max-w-xl gap-3">
-              <Input placeholder="Job title, skill, or company" aria-label="Example input" />
-              <Select aria-label="Example select" defaultValue="">
-                <option value="" disabled>Choose a city</option>
-                <option>Karachi</option>
-                <option>Lahore</option>
-                <option>Islamabad</option>
-              </Select>
+            <p className="text-xs text-slate-500">Loading ≠ disabled: loading keeps its label with a spinner and announces busy to screen readers; disabled is dimmed with no spinner.</p>
+            <div className="grid max-w-xl gap-4">
+              <FormField label="Keyword" htmlFor="ds-keyword" hint="Job title, skill, or company">
+                <Input id="ds-keyword" placeholder="e.g. Frontend developer" />
+              </FormField>
+              <FormField label="Email" htmlFor="ds-email" error="Enter a valid email address">
+                <Input id="ds-email" type="email" defaultValue="not-an-email" invalid />
+              </FormField>
+              <FormField label="City" htmlFor="ds-city">
+                <Select id="ds-city" defaultValue="">
+                  <option value="" disabled>Choose a city</option>
+                  <option>Karachi</option>
+                  <option>Lahore</option>
+                  <option>Islamabad</option>
+                </Select>
+              </FormField>
             </div>
           </CardContent>
         </Card>
@@ -400,6 +425,117 @@ export default function DesignSystemPage() {
             <p className="font-semibold text-slate-900">Patterned panel</p>
             <p className="mt-1 text-sm text-slate-600">Faint geometric texture for trust/feature bands.</p>
           </div>
+        </div>
+      </Section>
+
+      {/* Job & company cards */}
+      <Section id="jobcards" title="Job & company cards" blurb="Premium cards: logo tile, verified badge, salary in tabular PKR, 2–3 chips, response-rate ring, bookmark, hover lift + border glow.">
+        <div className="grid gap-4 md:grid-cols-2">
+          <JobCard
+            job={{
+              id: "demo-1",
+              title: "Frontend Developer",
+              companyName: "TechVista Solutions",
+              verified: true,
+              city: "Karachi",
+              salaryMin: 150000,
+              salaryMax: 220000,
+              tags: ["React", "TypeScript", "Remote"],
+              postedAgo: "2 days ago",
+              responseRate: 82,
+              href: "#",
+            }}
+          />
+          <CompanyCard
+            company={{
+              slug: "techvista",
+              name: "TechVista Solutions",
+              industry: "Software",
+              city: "Karachi",
+              openRoles: 5,
+              verified: true,
+              href: "#",
+            }}
+          />
+        </div>
+      </Section>
+
+      {/* Stat cards */}
+      <Section id="statcards" title="Stat cards" blurb="Icon tile, big tabular number, trend arrow + %, 7-day sparkline. Hero variant is larger for the 3–4 top metrics.">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard label="Live vacancies" value="1,248" trend={12.5} trendLabel="vs last week" spark={[8, 10, 9, 12, 14, 13, 16]} icon={Briefcase} tone="blue" hero />
+          <StatCard label="Applications" value="3,904" trend={8.1} spark={[20, 24, 22, 28, 30, 29, 34]} icon={Users} tone="teal" />
+          <StatCard label="Interviews" value="216" trend={-3.2} spark={[12, 11, 13, 10, 9, 11, 10]} icon={Clock3} tone="amber" />
+          <StatCard label="Hired" value="48" trend={22.0} spark={[2, 3, 3, 4, 5, 4, 6]} icon={ShieldCheck} tone="emerald" />
+        </div>
+      </Section>
+
+      {/* Data table */}
+      <Section id="datatable" title="Data table" blurb="Sticky header, row hover, sortable columns, density toggle, tabular numbers.">
+        <DataTable
+          caption="Demo candidates"
+          columns={[
+            { key: "name", header: "Candidate", render: (r: { name: string }) => <span className="font-medium text-slate-900">{r.name}</span>, sortable: true, sortValue: (r) => r.name },
+            { key: "stage", header: "Stage", render: (r: { stage: string; tone: "blue" | "violet" | "amber" }) => <StatusPill tone={r.tone}>{r.stage}</StatusPill> },
+            { key: "score", header: "Score", render: (r: { score: number }) => `${r.score}/10`, sortable: true, sortValue: (r) => r.score, className: "text-end" },
+            { key: "applied", header: "Applied", render: (r: { applied: string }) => r.applied },
+          ]}
+          rows={[
+            { name: "Hira Shahid", stage: "Applied", tone: "blue" as const, score: 8, applied: "11-Oct-2026" },
+            { name: "Danish Iqbal", stage: "Screening", tone: "violet" as const, score: 7, applied: "10-Oct-2026" },
+            { name: "Sana Malik", stage: "Interview", tone: "amber" as const, score: 9, applied: "09-Oct-2026" },
+          ]}
+          rowKey={(r) => r.name}
+        />
+      </Section>
+
+      {/* Pipeline candidate card */}
+      <Section id="pipelinecard" title="Pipeline candidate card" blurb="Avatar, headline, job context, time-in-stage, assignees. Used on the employer Kanban board with drag-and-drop.">
+        <div className="max-w-xs">
+          <PipelineCandidateCardPreview />
+        </div>
+      </Section>
+
+      {/* Tabs, pagination, filter chips */}
+      <Section id="nav" title="Tabs · Pagination · Filter chips" blurb="Segmented tabs, clearly-visible active page, removable filter chips.">
+        <div className="space-y-6">
+          <TabsDemo />
+          <div>
+            <p className="mb-2 text-xs font-medium text-slate-500">Pagination — active page is filled brand-600, never blank:</p>
+            <PaginationDemo />
+          </div>
+          <div>
+            <p className="mb-2 text-xs font-medium text-slate-500">Active filter chips — click × to remove:</p>
+            <div className="flex flex-wrap gap-2">
+              {["Karachi", "Full-time", "Rs 100k+"].map((f) => (
+                <span key={f} className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 py-1 pe-2 ps-3 text-xs font-medium text-brand-800">
+                  {f}
+                  <X className="h-3.5 w-3.5" aria-hidden="true" />
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      {/* Toasts, skeletons, empty state */}
+      <Section id="feedback" title="Toasts · Skeletons · Empty state" blurb="Feedback for every state: loading (shimmer), empty (illustration + guidance + action), success/error toasts.">
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-3">
+            <Toast tone="success" title="Application moved" description="Hira Shahid is now in Interview." />
+            <Toast tone="error" title="Couldn't save" description="Check your connection and try again." />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+              <SkeletonCard />
+            </div>
+          </div>
+          <EmptyState
+            title="No applications yet"
+            description="When candidates apply, they'll appear here. Share the job link to get started."
+            icon={<NoApplicationsIllustration className="h-20 w-20" />}
+            action={<Button size="sm">View open jobs</Button>}
+          />
         </div>
       </Section>
 

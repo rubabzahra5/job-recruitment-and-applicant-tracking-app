@@ -207,7 +207,7 @@ export default async function CandidateProfilePage() {
                   <ul className="mt-4 space-y-1.5">
                     {completion.missing.map((m) => (
                       <li key={m} className="flex items-start gap-2 text-sm text-slate-600">
-                        <span aria-hidden="true" className="mt-0.5 text-amber-500">○</span>
+                        <span aria-hidden="true" className="mt-0.5 text-amber-600">○</span>
                         {m}
                       </li>
                     ))}

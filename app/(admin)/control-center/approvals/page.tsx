@@ -259,7 +259,7 @@ export default async function ApprovalsPage() {
             </Table>
           )}
           <div className="mt-3">
-            <Badge tone="neutral">Decisions recorded in offer_approvals with notes</Badge>
+            <Badge tone="neutral">Decisions are saved with reviewer notes</Badge>
           </div>
         </CardContent>
       </Card>

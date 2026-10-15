@@ -24,6 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/Table";
 import { formatDateOnlyKarachi } from "@/lib/format";
+import { formatLabel } from "@/lib/format-label";
 import { setOrgAccountStatus, setOrgVerification } from "./actions";
 
 export const metadata: Metadata = { title: "Control Center — Organizations" };
@@ -176,12 +177,12 @@ export default async function OrganizationsPage({
                   </TableCell>
                   <TableCell>
                     <Badge tone={VERIFICATION_TONES[o.verification_status] ?? "neutral"}>
-                      {o.verification_status}
+                      {formatLabel(o.verification_status)}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     <Badge tone={ACCOUNT_TONES[o.account_status] ?? "neutral"}>
-                      {o.account_status}
+                      {formatLabel(o.account_status)}
                     </Badge>
                   </TableCell>
                   <TableCell>{memberCounts.get(o.id) ?? 0}</TableCell>

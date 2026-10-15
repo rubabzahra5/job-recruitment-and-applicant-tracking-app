@@ -6,7 +6,7 @@ import type { LucideIcon } from "lucide-react";
  * Use ONE icon set (Lucide), 1.75px stroke, rounded caps, everywhere.
  */
 
-type IconTone = "blue" | "teal" | "amber" | "emerald" | "rose" | "slate" | "navy";
+type IconTone = "blue" | "teal" | "amber" | "emerald" | "rose" | "slate" | "navy" | "violet" | "indigo";
 
 const TONES: Record<IconTone, { tile: string; icon: string }> = {
   blue: { tile: "bg-blue-500/10", icon: "text-blue-600" },
@@ -16,6 +16,8 @@ const TONES: Record<IconTone, { tile: string; icon: string }> = {
   rose: { tile: "bg-rose-500/10", icon: "text-rose-600" },
   slate: { tile: "bg-slate-500/10", icon: "text-slate-600" },
   navy: { tile: "bg-brand-900/10", icon: "text-brand-900" },
+  violet: { tile: "bg-violet-500/10", icon: "text-violet-600" },
+  indigo: { tile: "bg-indigo-500/10", icon: "text-indigo-600" },
 };
 
 const SIZES = {

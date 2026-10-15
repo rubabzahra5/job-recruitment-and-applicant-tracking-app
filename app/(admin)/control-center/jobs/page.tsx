@@ -95,7 +95,7 @@ export default async function JobsPage({
       <div>
         <h1 className="text-2xl font-bold">Jobs — cross-org moderation</h1>
         <p className="mt-1 text-sm text-slate-600">
-          {count ?? 0} jobs. Approval decisions are recorded in job_approvals with moderator notes.
+          {count ?? 0} jobs. Approval decisions are saved with moderator notes.
         </p>
       </div>
 

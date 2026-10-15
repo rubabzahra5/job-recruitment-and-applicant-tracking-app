@@ -19,6 +19,7 @@ import {
   TableRow,
 } from "@/components/ui/Table";
 import { formatDateKarachi, timeAgo } from "@/lib/format";
+import { formatLabel } from "@/lib/format-label";
 import { AssignRoleDialog, PasswordResetButton } from "./UserDetailDialogs";
 import { reactivateUser, revokeRole, suspendUser } from "../actions";
 
@@ -406,7 +407,7 @@ export default async function UserDetailPage({
                       <TableRow key={inv.id as string}>
                         <TableCell>{org?.name ?? "—"}</TableCell>
                         <TableCell><Badge tone="info">{inv.role as string}</Badge></TableCell>
-                        <TableCell>{inv.status as string}</TableCell>
+                        <TableCell>{formatLabel(inv.status as string)}</TableCell>
                         <TableCell className="whitespace-nowrap text-slate-500">
                           {formatDateKarachi(inv.expires_at as string)}
                         </TableCell>

@@ -21,6 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/Table";
 import { formatDateKarachi } from "@/lib/format";
+import { formatLabel } from "@/lib/format-label";
 import { InviteDialog, ProvisionDialog } from "./UserDialogs";
 import { ResendInvitationButton } from "./ResendButton";
 import { revokeInvitation } from "./actions";
@@ -175,7 +176,7 @@ export default async function UsersPage({
                       <div className="text-xs text-slate-500">{(p.display_name as string) ?? ""}</div>
                       {phone && <div className="text-xs text-slate-400">{phone}</div>}
                       {isDuplicate && (
-                        <Badge tone="warning">possible duplicate</Badge>
+                        <Badge tone="warning">{formatLabel("possible_duplicate")}</Badge>
                       )}
                     </TableCell>
                     <TableCell>
@@ -183,7 +184,7 @@ export default async function UsersPage({
                         {grants.length === 0 && <span className="text-xs text-slate-400">no roles</span>}
                         {grants.map((g, i) => (
                           <Badge key={i} tone={g.role === "super_admin" ? "danger" : "info"}>
-                            {g.role}{g.org ? ` · ${g.org}` : ""}
+                            {formatLabel(g.role)}{g.org ? ` · ${g.org}` : ""}
                           </Badge>
                         ))}
                       </div>
