@@ -16,6 +16,18 @@ const PALETTE = [
   "bg-amber-600",
 ] as const;
 
+/** Gradient pairs for the "gradient" variant — deterministic per name. */
+const GRADIENTS = [
+  "from-blue-600 to-teal-500",
+  "from-indigo-600 to-blue-500",
+  "from-teal-600 to-emerald-500",
+  "from-sky-600 to-cyan-500",
+  "from-violet-600 to-indigo-500",
+  "from-amber-600 to-orange-500",
+  "from-emerald-600 to-teal-500",
+  "from-blue-700 to-indigo-600",
+] as const;
+
 function hashName(name: string): number {
   let h = 0;
   for (let i = 0; i < name.length; i++) {
@@ -42,14 +54,20 @@ export interface AvatarProps {
   name: string;
   size?: keyof typeof SIZES;
   className?: string;
+  /** "solid" (default) or "gradient" — deterministic per name. */
+  variant?: "solid" | "gradient";
 }
 
-export function Avatar({ name, size = "sm", className = "" }: AvatarProps) {
-  const color = PALETTE[hashName(name) % PALETTE.length];
+export function Avatar({ name, size = "sm", className = "", variant = "solid" }: AvatarProps) {
+  const idx = hashName(name) % PALETTE.length;
+  const bg =
+    variant === "gradient"
+      ? `bg-gradient-to-br ${GRADIENTS[idx]}`
+      : PALETTE[idx];
   return (
     <span
       aria-hidden="true"
-      className={`inline-flex shrink-0 items-center justify-center rounded-full font-semibold text-white ${color} ${SIZES[size]} ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center rounded-full font-semibold text-white ${bg} ${SIZES[size]} ${className}`}
     >
       {initials(name)}
     </span>
