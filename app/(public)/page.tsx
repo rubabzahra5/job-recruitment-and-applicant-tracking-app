@@ -58,7 +58,7 @@ function toJobCard(job: PublicJob, responseRates: Map<string, number | null>): J
     salaryMin: job.salary_disclosed ? job.salary_min : null,
     salaryMax: job.salary_disclosed ? job.salary_max : null,
     tags: tags.slice(0, 3),
-    postedAgo: `${timeAgo(job.published_at ?? job.created_at)} ago`,
+    postedAgo: timeAgo(job.published_at ?? job.created_at),
     responseRate: job.org ? (responseRates.get(job.org.id) ?? null) : null,
     href: `/jobs/${job.slug}`,
   };
