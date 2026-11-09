@@ -1,11 +1,16 @@
 import { z } from "zod";
 
-import { COMMENT_BODY_MAX, POST_BODY_MAX } from "@/lib/feed-shared";
+import {
+  COMMENT_BODY_MAX,
+  POST_BODY_MAX,
+  isValidPostBody,
+  resolveFollowTarget,
+} from "@/lib/feed-shared";
 
 /**
  * Zod schemas for the community feed (app/(public)/feed).
  * Plain TS: imported by the server actions AND unit tests.
- * Length limits mirror the CHECK constraints in migration 0015.
+ * Length limits mirror the CHECK constraints in migrations 0015/0016.
  */
 
 export const createPostSchema = z.object({
@@ -33,3 +38,32 @@ export type CreateCommentInput = z.infer<typeof createCommentSchema>;
 
 export const postIdSchema = z.string().uuid("Invalid post.");
 export const commentIdSchema = z.string().uuid("Invalid comment.");
+
+/**
+ * Repost (share) schema — migration 0016. The body is the sharer's own
+ * comment on the shared post and may be EMPTY (a pure "repost now").
+ * Mirrors isValidPostBody(body, { isRepost: true }).
+ */
+export const createRepostSchema = z.object({
+  originalPostId: z.string().uuid("Invalid post."),
+  body: z
+    .string()
+    .trim()
+    .max(POST_BODY_MAX, `Posts can be at most ${POST_BODY_MAX} characters.`)
+    .refine((b) => isValidPostBody(b, { isRepost: true }), "Invalid repost."),
+});
+export type CreateRepostInput = z.infer<typeof createRepostSchema>;
+
+/**
+ * Follow/unfollow target — exactly one of a person (profileId) or a
+ * company (orgId), mirroring the follows table's CHECK constraint.
+ */
+export const followTargetSchema = z
+  .object({
+    profileId: z.string().uuid("Invalid profile.").optional().nullable(),
+    orgId: z.string().uuid("Invalid organization.").optional().nullable(),
+  })
+  .refine((v) => resolveFollowTarget(v) !== null, {
+    message: "Choose exactly one person or company to follow.",
+  });
+export type FollowTargetInput = z.infer<typeof followTargetSchema>;

@@ -5,6 +5,7 @@ import { useCallback, useState } from "react";
 import type { FeedAuthorView, FeedPostView } from "@/lib/feed-shared";
 import {
   addComment,
+  createRepost,
   deleteComment,
   deletePost,
   toggleLike,
@@ -17,10 +18,17 @@ import type { PostCardHandlers, PostCardViewer } from "./PostCard";
  * Used by the /feed client and by post lists embedded on company pages and
  * public profiles. Likes/comments update optimistically and roll back when
  * the server action fails; the error surfaces via `error`.
+ *
+ * Reposts are NOT optimistic (the server returns the new post view and
+ * enforces one-repost-per-user), but the original's share count patches
+ * locally on success. `prependCreatedPosts` is on for the main feed (your
+ * repost appears at the top) and off for embedded lists (a company page
+ * shouldn't suddenly show your personal repost in the company's list).
  */
 export function usePostList(
   initialPosts: FeedPostView[],
   viewer: (PostCardViewer & { author: FeedAuthorView }) | null,
+  opts: { prependCreatedPosts?: boolean } = {},
 ) {
   const [posts, setPosts] = useState<FeedPostView[]>(initialPosts);
   const [error, setError] = useState<string | null>(null);
@@ -29,7 +37,10 @@ export function usePostList(
     setPosts((prev) => prev.map((p) => (p.id === postId ? patch(p) : p)));
   }, []);
 
-  const handlers: PostCardHandlers = {
+  const handlers: Pick<
+    PostCardHandlers,
+    "onToggleLike" | "onDeletePost" | "onAddComment" | "onDeleteComment"
+  > = {
     onToggleLike: useCallback(
       (post: FeedPostView) => {
         if (!viewer) return;
@@ -119,6 +130,38 @@ export function usePostList(
     setPosts((prev) => [post, ...prev]);
   }, []);
 
+  const runRepost = useCallback(
+    async (post: FeedPostView, body: string): Promise<FeedPostView | null> => {
+      if (!viewer) return null;
+      const res = await createRepost({ originalPostId: post.id, body });
+      if (!res.ok || !res.post) {
+        setError(res.error ?? "Could not share this post.");
+        return null;
+      }
+      patchPost(post.id, (p) => ({ ...p, shareCount: p.shareCount + 1, sharedByMe: true }));
+      if (opts.prependCreatedPosts) prependPost(res.post);
+      return res.post;
+    },
+    [viewer, patchPost, prependPost, opts.prependCreatedPosts],
+  );
+
+  const repostHandlers = {
+    onRepostNow: useCallback(
+      (post: FeedPostView) => {
+        void runRepost(post, "");
+      },
+      [runRepost],
+    ),
+    onRepostWithBody: useCallback(
+      async (post: FeedPostView, body: string): Promise<boolean> => {
+        return (await runRepost(post, body)) !== null;
+      },
+      [runRepost],
+    ),
+  };
+
+  const allHandlers: PostCardHandlers = { ...handlers, ...repostHandlers };
+
   const appendPosts = useCallback((more: FeedPostView[]) => {
     setPosts((prev) => {
       const seen = new Set(prev.map((p) => p.id));
@@ -126,5 +169,5 @@ export function usePostList(
     });
   }, []);
 
-  return { posts, handlers, error, prependPost, appendPosts };
+  return { posts, handlers: allHandlers, error, prependPost, appendPosts };
 }

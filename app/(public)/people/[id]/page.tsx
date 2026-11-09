@@ -9,9 +9,11 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { getSessionUser } from "@/lib/auth";
 import { listAuthorPosts } from "@/lib/feed";
 import type { FeedAuthorView } from "@/lib/feed-shared";
+import { getProfileFollowState } from "@/lib/follows";
 import { formatDateOnlyKarachi } from "@/lib/format";
 import { isSuperAdmin } from "@/lib/rbac";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { FollowButton } from "../../_components/FollowButton";
 import { PostList } from "../../_components/PostList";
 
 type Params = { id: string };
@@ -185,6 +187,9 @@ async function renderProfile(
   const fullName = cp.full_name as string;
   const location = [cp.city, cp.province].filter(Boolean).join(", ");
 
+  // Follow state (fail-soft: section hides until migration 0016 runs).
+  const followState = await getProfileFollowState(viewer?.id ?? null, id);
+
   // The candidate's feed posts (fail-soft: section hides pre-migration).
   const posts = await listAuthorPosts(viewer?.id ?? null, id);
 
@@ -243,6 +248,31 @@ async function renderProfile(
               </div>
             </div>
           </div>
+          {followState.ready && (
+            <div className="mt-4 border-t border-slate-100 pt-4">
+              {isOwner ? (
+                <p className="text-sm text-slate-600">
+                  <span className="font-semibold text-slate-900">
+                    {followState.data.followerCount}
+                  </span>{" "}
+                  follower{followState.data.followerCount === 1 ? "" : "s"}
+                  {" · "}
+                  <span className="font-semibold text-slate-900">
+                    {followState.data.followingCount ?? 0}
+                  </span>{" "}
+                  following
+                </p>
+              ) : (
+                <FollowButton
+                  profileId={id}
+                  signedIn={Boolean(viewer)}
+                  initialFollowing={followState.data.isFollowing}
+                  followerCount={followState.data.followerCount}
+                  followingCount={followState.data.followingCount}
+                />
+              )}
+            </div>
+          )}
           {cp.summary && (
             <div className="mt-6">
               <h2 className="text-lg font-bold text-slate-900">About</h2>

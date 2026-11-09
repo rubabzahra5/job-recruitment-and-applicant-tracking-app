@@ -3,7 +3,11 @@ import { describe, expect, it } from "vitest";
 import {
   canDeleteComment,
   canDeletePost,
+  canFollowTarget,
+  canSharePost,
+  isValidPostBody,
   personHref,
+  resolveFollowTarget,
   POST_BODY_MAX,
   COMMENT_BODY_MAX,
   type FeedAuthorView,
@@ -13,6 +17,8 @@ import {
 import {
   createCommentSchema,
   createPostSchema,
+  createRepostSchema,
+  followTargetSchema,
 } from "@/app/(public)/feed/_schemas";
 
 const ORG_ID = "11111111-1111-4111-8111-111111111111";
@@ -117,5 +123,85 @@ describe("delete permissions", () => {
   it("anonymous viewers cannot delete", () => {
     expect(canDeletePost(null, post, false)).toBe(false);
     expect(canDeleteComment(null, comment, false)).toBe(false);
+  });
+});
+
+describe("repost body rule (migration 0016)", () => {
+  it("a pure repost may have an empty body", () => {
+    expect(isValidPostBody("", { isRepost: true })).toBe(true);
+    expect(isValidPostBody("   ", { isRepost: true })).toBe(true);
+    expect(createRepostSchema.safeParse({ originalPostId: POST_ID, body: "" }).success).toBe(true);
+  });
+
+  it("a normal post may NOT have an empty body", () => {
+    expect(isValidPostBody("")).toBe(false);
+    expect(isValidPostBody("", { isRepost: false })).toBe(false);
+    expect(isValidPostBody("   ")).toBe(false);
+  });
+
+  it("a repost with thoughts accepts text up to the limit", () => {
+    expect(isValidPostBody("Worth a read!", { isRepost: true })).toBe(true);
+    expect(
+      createRepostSchema.safeParse({ originalPostId: POST_ID, body: "a".repeat(POST_BODY_MAX) })
+        .success,
+    ).toBe(true);
+  });
+
+  it("rejects over-long repost bodies and bad original ids", () => {
+    expect(isValidPostBody("a".repeat(POST_BODY_MAX + 1), { isRepost: true })).toBe(false);
+    expect(
+      createRepostSchema.safeParse({
+        originalPostId: POST_ID,
+        body: "a".repeat(POST_BODY_MAX + 1),
+      }).success,
+    ).toBe(false);
+    expect(createRepostSchema.safeParse({ body: "hi" }).success).toBe(false);
+    expect(createRepostSchema.safeParse({ originalPostId: "nope", body: "" }).success).toBe(false);
+  });
+});
+
+describe("canSharePost", () => {
+  it("normal posts can be shared once 0016 is live", () => {
+    expect(canSharePost({ isRepost: false, shareEnabled: true })).toBe(true);
+  });
+
+  it("a repost cannot itself be reposted", () => {
+    expect(canSharePost({ isRepost: true, shareEnabled: true })).toBe(false);
+  });
+
+  it("nothing can be shared before migration 0016", () => {
+    expect(canSharePost({ isRepost: false, shareEnabled: false })).toBe(false);
+  });
+});
+
+describe("follow target rule (migration 0016)", () => {
+  it("resolves exactly one target", () => {
+    expect(resolveFollowTarget({ profileId: "user-9" })).toEqual({
+      kind: "profile",
+      profileId: "user-9",
+    });
+    expect(resolveFollowTarget({ orgId: ORG_ID })).toEqual({ kind: "org", orgId: ORG_ID });
+  });
+
+  it("rejects both targets and neither target", () => {
+    expect(resolveFollowTarget({ profileId: "user-9", orgId: ORG_ID })).toBeNull();
+    expect(resolveFollowTarget({})).toBeNull();
+    expect(resolveFollowTarget({ profileId: null, orgId: null })).toBeNull();
+  });
+
+  it("the zod schema enforces the same rule", () => {
+    expect(followTargetSchema.safeParse({ profileId: POST_ID }).success).toBe(true);
+    expect(followTargetSchema.safeParse({ orgId: ORG_ID }).success).toBe(true);
+    expect(followTargetSchema.safeParse({ profileId: POST_ID, orgId: ORG_ID }).success).toBe(false);
+    expect(followTargetSchema.safeParse({}).success).toBe(false);
+  });
+
+  it("canFollowTarget blocks anonymous users and self-follows", () => {
+    const person = { kind: "profile", profileId: "user-9" } as const;
+    const org = { kind: "org", orgId: ORG_ID } as const;
+    expect(canFollowTarget(null, person)).toBe(false);
+    expect(canFollowTarget("user-9", person)).toBe(false);
+    expect(canFollowTarget("user-1", person)).toBe(true);
+    expect(canFollowTarget("user-1", org)).toBe(true);
   });
 });

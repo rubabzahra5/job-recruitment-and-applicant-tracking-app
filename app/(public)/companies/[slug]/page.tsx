@@ -8,9 +8,11 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { getSessionUser } from "@/lib/auth";
 import { listOrgPosts } from "@/lib/feed";
 import type { FeedAuthorView } from "@/lib/feed-shared";
+import { getOrgFollowState } from "@/lib/follows";
 import { formatResponseBadge, getOrgResponsiveness } from "@/lib/responsiveness";
-import { isSuperAdmin } from "@/lib/rbac";
+import { getUserOrgRole, isSuperAdmin } from "@/lib/rbac";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { FollowButton } from "../../_components/FollowButton";
 import { JobCard } from "../../_components/JobCard";
 import { PostList } from "../../_components/PostList";
 import {
@@ -81,6 +83,13 @@ export default async function CompanyDetailPage({ params }: { params: Promise<Pa
     ),
   ];
 
+  // Follow state (fail-soft: section hides until migration 0016 runs).
+  // Members of this org don't get a follow button for their own company.
+  const followState = await getOrgFollowState(viewer?.id ?? null, org.id);
+  const viewerOrgRole = viewer
+    ? await getUserOrgRole(viewer.id, org.id).catch(() => null)
+    : null;
+
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
       <nav aria-label="Breadcrumb" className="text-sm text-slate-500">
@@ -136,6 +145,25 @@ export default async function CompanyDetailPage({ params }: { params: Promise<Pa
               )}
             </div>
           </div>
+          {followState.ready && (
+            <div className="mt-4 border-t border-slate-100 pt-4">
+              {viewerOrgRole ? (
+                <p className="text-sm text-slate-600">
+                  <span className="font-semibold text-slate-900">
+                    {followState.data.followerCount}
+                  </span>{" "}
+                  follower{followState.data.followerCount === 1 ? "" : "s"}
+                </p>
+              ) : (
+                <FollowButton
+                  orgId={org.id}
+                  signedIn={Boolean(viewer)}
+                  initialFollowing={followState.data.isFollowing}
+                  followerCount={followState.data.followerCount}
+                />
+              )}
+            </div>
+          )}
           {org.about && (
             <div className="mt-6">
               <h2 className="text-lg font-bold text-slate-900">About {org.name}</h2>

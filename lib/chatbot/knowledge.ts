@@ -449,6 +449,25 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
     links: [{ label: "Open the feed", href: "/feed" }],
   },
   {
+    id: "share-repost",
+    question: "How do I share or repost a post?",
+    keywords: ["share a post", "repost", "repost a post", "how to share a post", "share post", "quote a post", "repost with your thoughts", "reshare"],
+    answer:
+      "Tap Share under any feed post. 'Repost now' shares it straight away; 'Repost with your thoughts' lets you add your own comment above it — on the Feed page it opens in the composer at the top. The original post appears quoted inside yours. You can share each post once, you can't re-share someone else's repost (share the original instead), and you can delete your repost at any time like a normal post.",
+    links: [{ label: "Open the feed", href: "/feed" }],
+  },
+  {
+    id: "follow",
+    question: "How do I follow people and companies?",
+    keywords: ["follow a company", "follow a person", "follow people", "follow companies", "followers", "unfollow", "follow button", "start following"],
+    answer:
+      "Open a person's public profile or a company page and tap Follow — the button switches to 'Following', and tapping it again unfollows. Follower and following counts are shown on profile and company pages. You can't follow your own profile or a company you work at.",
+    links: [
+      { label: "Browse companies", href: "/companies" },
+      { label: "Open the feed", href: "/feed" },
+    ],
+  },
+  {
     id: "public-profile",
     question: "How do public profiles work, and how do I make mine public?",
     keywords: ["public profile", "make my profile public", "make profile public", "profile public", "share my profile", "public page", "people page", "switch on profile"],

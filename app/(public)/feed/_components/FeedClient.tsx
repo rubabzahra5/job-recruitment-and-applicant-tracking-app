@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
+import { Repeat2, X } from "lucide-react";
 
 import { Alert } from "@/components/ui/Alert";
 import { Avatar } from "@/components/ui/Avatar";
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { POST_BODY_MAX, type FeedAuthorView, type FeedPostView } from "@/lib/feed-shared";
 import { createPost, fetchFeedPage } from "../_actions";
-import { PostCard, type PostCardViewer } from "../../_components/PostCard";
+import { PostCard, type PostCardHandlers, type PostCardViewer } from "../../_components/PostCard";
 import { usePostList } from "../../_components/usePostList";
 
 export interface FeedOrgOption {
@@ -36,7 +37,9 @@ export function FeedClient({
   orgOptions,
   jobsByOrg,
 }: FeedClientProps) {
-  const { posts, handlers, error, prependPost, appendPosts } = usePostList(initialPosts, viewer);
+  const { posts, handlers, error, prependPost, appendPosts } = usePostList(initialPosts, viewer, {
+    prependCreatedPosts: true,
+  });
   const [cursor, setCursor] = useState<string | null>(initialCursor);
   const [loadingMore, setLoadingMore] = useState(false);
 
@@ -47,12 +50,40 @@ export function FeedClient({
   const [composerError, setComposerError] = useState<string | null>(null);
   const [isPosting, startPosting] = useTransition();
 
+  // Quote mode: when set, the composer shares this post with your thoughts.
+  const [quoteOf, setQuoteOf] = useState<FeedPostView | null>(null);
+  const composerRef = useRef<HTMLElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const cardHandlers: PostCardHandlers = {
+    ...handlers,
+    onQuoteRepost: (post) => {
+      setQuoteOf(post);
+      setComposerError(null);
+      composerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+      window.setTimeout(() => textareaRef.current?.focus(), 350);
+    },
+  };
+
   const orgJobs = asOrgId ? (jobsByOrg[asOrgId] ?? []) : [];
 
   const submitPost = () => {
     const text = body.trim();
-    if (!text) return;
     setComposerError(null);
+    if (quoteOf) {
+      const target = quoteOf;
+      startPosting(async () => {
+        const done = await handlers.onRepostWithBody(target, text);
+        if (!done) {
+          setComposerError("Your share could not be posted. Please try again.");
+          return;
+        }
+        setQuoteOf(null);
+        setBody("");
+      });
+      return;
+    }
+    if (!text) return;
     startPosting(async () => {
       const res = await createPost({
         body: text,
@@ -86,7 +117,11 @@ export function FeedClient({
   return (
     <div>
       {/* Composer */}
-      <section aria-label="Create a post" className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <section
+        ref={composerRef}
+        aria-label="Create a post"
+        className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+      >
         <div className="flex items-start gap-3">
           <Avatar name={viewer.author.name} size="md" />
           <div className="min-w-0 flex-1">
@@ -95,18 +130,42 @@ export function FeedClient({
             </label>
             <textarea
               id="feed-composer"
+              ref={textareaRef}
               value={body}
               onChange={(e) => setBody(e.target.value)}
               rows={3}
               maxLength={POST_BODY_MAX}
-              placeholder="Share an update with the TalentBridge community…"
+              placeholder={
+                quoteOf
+                  ? "Add your thoughts on this post…"
+                  : "Share an update with the TalentBridge community…"
+              }
               className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
             />
+            {quoteOf && (
+              <div className="mt-2 flex items-start gap-2 rounded-lg border border-brand-200 bg-brand-50 p-3">
+                <Repeat2 className="mt-0.5 h-4 w-4 shrink-0 text-brand-700" aria-hidden="true" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-brand-900">
+                    Sharing {quoteOf.org ? quoteOf.org.name : quoteOf.author.name}&rsquo;s post
+                  </p>
+                  <p className="mt-0.5 line-clamp-2 text-sm text-slate-600">{quoteOf.body}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setQuoteOf(null)}
+                  className="rounded-md p-1 text-slate-400 transition-colors hover:bg-white hover:text-slate-600"
+                  aria-label="Cancel share"
+                >
+                  <X className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </div>
+            )}
             <div className="mt-1 flex items-center justify-between">
               <p className="text-xs text-slate-400">
                 {body.length}/{POST_BODY_MAX}
               </p>
-              {orgOptions.length > 0 && (
+              {!quoteOf && orgOptions.length > 0 && (
                 <div className="flex flex-wrap items-center gap-2">
                   <label htmlFor="feed-post-as" className="text-xs font-medium text-slate-600">
                     Post as
@@ -156,8 +215,12 @@ export function FeedClient({
               </Alert>
             )}
             <div className="mt-3 flex justify-end">
-              <Button onClick={submitPost} isLoading={isPosting} disabled={body.trim().length === 0}>
-                Post
+              <Button
+                onClick={submitPost}
+                isLoading={isPosting}
+                disabled={!quoteOf && body.trim().length === 0}
+              >
+                {quoteOf ? "Share post" : "Post"}
               </Button>
             </div>
           </div>
@@ -174,7 +237,7 @@ export function FeedClient({
           />
         ) : (
           posts.map((post) => (
-            <PostCard key={post.id} post={post} viewer={viewer} handlers={handlers} />
+            <PostCard key={post.id} post={post} viewer={viewer} handlers={cardHandlers} />
           ))
         )}
       </div>

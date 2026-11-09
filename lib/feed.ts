@@ -6,18 +6,24 @@ import {
   POST_COMMENTS_PREVIEW,
   type FeedAuthorView,
   type FeedCommentView,
+  type FeedOriginalPostView,
   type FeedPostView,
 } from "@/lib/feed-shared";
 
 /**
  * Community feed data layer (migration 0015: posts / post_likes /
- * post_comments).
+ * post_comments; migration 0016: posts.original_post_id for reposts).
  *
  * FAIL-SOFT CONTRACT: every read returns `{ ready: false }` instead of
  * throwing when the feed tables are unavailable — most importantly before
  * migration 0015 has been run. Pages render a friendly "being set up"
  * state for `ready: false`; no existing page may crash because the feed
  * is not live yet.
+ *
+ * Migration 0016 has its own, softer fallback: when original_post_id
+ * doesn't exist yet, reads fall back to the 0015 select and posts carry
+ * `shareEnabled: false`, so share controls hide while the rest of the
+ * feed keeps working.
  *
  * Reads use the service-role client (RLS bypassed) AFTER the caller has
  * established the session, mirroring lib/responsiveness.ts. Authorization
@@ -41,6 +47,8 @@ interface RawPost {
   body: string;
   created_at: string;
   author_id: string;
+  /** Migration 0016; absent when the pre-0016 select fallback was used. */
+  original_post_id?: string | null;
   author: RawAuthor | null;
   org: {
     id: string;
@@ -59,12 +67,60 @@ interface RawPost {
   } | null;
 }
 
-const POST_SELECT = `
+/** Pre-0016 select (migration 0015 shape). */
+const POST_SELECT_V1 = `
   id, body, created_at, author_id,
   author:profiles!author_id ( id, display_name, email, profile_public ),
   org:organizations!org_id ( id, name, slug, logo_url, verification_status ),
   job:jobs!job_id ( id, title, slug, employment_type, workplace, location_id )
 `;
+
+/** Current select: adds posts.original_post_id (migration 0016, reposts). */
+const POST_SELECT = `
+  id, body, created_at, author_id, original_post_id,
+  author:profiles!author_id ( id, display_name, email, profile_public ),
+  org:organizations!org_id ( id, name, slug, logo_url, verification_status ),
+  job:jobs!job_id ( id, title, slug, employment_type, workplace, location_id )
+`;
+
+/** The original post embedded in a repost (quoted card payload). */
+interface RawOriginalPost {
+  id: string;
+  body: string;
+  created_at: string;
+  author_id: string;
+  author: RawAuthor | null;
+  org: RawPost["org"];
+  job: { id: string; title: string; slug: string } | null;
+}
+
+const ORIGINAL_SELECT = `
+  id, body, created_at, author_id,
+  author:profiles!author_id ( id, display_name, email, profile_public ),
+  org:organizations!org_id ( id, name, slug, logo_url, verification_status ),
+  job:jobs!job_id ( id, title, slug )
+`;
+
+type PostQueryResult = { data: unknown; error: unknown };
+
+/**
+ * Run a posts query with the 0016 select, falling back to the 0015 select
+ * when the column doesn't exist yet. `shareReady` tells callers whether
+ * repost data (original_post_id) is available; when it isn't, the feed
+ * still renders — share controls just stay hidden (fail-soft for the
+ * window between deploying this code and running migration 0016).
+ */
+async function fetchPostRows(
+  runQuery: (select: string) => PromiseLike<PostQueryResult>,
+): Promise<{ rows: RawPost[]; shareReady: boolean }> {
+  const v2 = await runQuery(POST_SELECT);
+  if (!v2.error) {
+    return { rows: (v2.data ?? []) as unknown as RawPost[], shareReady: true };
+  }
+  const v1 = await runQuery(POST_SELECT_V1);
+  if (v1.error) throw v1.error;
+  return { rows: (v1.data ?? []) as unknown as RawPost[], shareReady: false };
+}
 
 function emailPrefix(email: string | null): string {
   return email?.split("@")[0] ?? "Member";
@@ -109,6 +165,7 @@ async function assemblePosts(
   db: Db,
   rows: RawPost[],
   viewerId: string | null,
+  shareReady = false,
 ): Promise<FeedPostView[]> {
   if (rows.length === 0) return [];
   const postIds = rows.map((r) => r.id);
@@ -117,6 +174,37 @@ async function assemblePosts(
   const authorsById = new Map<string, RawAuthor>();
   for (const r of rows) {
     if (r.author) authorsById.set(r.author.id, r.author);
+  }
+
+  // ── Reposts (migration 0016): quoted originals + share counts ──────────
+  const originalsById = new Map<string, RawOriginalPost>();
+  const shareCounts = new Map<string, number>();
+  const sharedByMe = new Set<string>();
+  if (shareReady) {
+    const originalIds = [
+      ...new Set(rows.map((r) => r.original_post_id).filter((x): x is string => Boolean(x))),
+    ];
+    if (originalIds.length > 0) {
+      const { data: originalRows, error: originalsError } = await db
+        .from("posts")
+        .select(ORIGINAL_SELECT)
+        .in("id", originalIds);
+      if (originalsError) throw originalsError;
+      for (const o of (originalRows ?? []) as unknown as RawOriginalPost[]) {
+        originalsById.set(o.id, o);
+        if (o.author) authorsById.set(o.author.id, o.author);
+      }
+    }
+    const { data: shareRows, error: sharesError } = await db
+      .from("posts")
+      .select("original_post_id, author_id")
+      .in("original_post_id", postIds);
+    if (sharesError) throw sharesError;
+    for (const s of shareRows ?? []) {
+      const oid = s.original_post_id as string;
+      shareCounts.set(oid, (shareCounts.get(oid) ?? 0) + 1);
+      if (viewerId && (s.author_id as string) === viewerId) sharedByMe.add(oid);
+    }
   }
 
   const { data: commentRows, error: commentsError } = await db
@@ -191,8 +279,30 @@ async function assemblePosts(
     commentsByPost.set(c.post_id, list);
   }
 
+  const buildOriginalView = (o: RawOriginalPost): FeedOriginalPostView => ({
+    id: o.id,
+    body: o.body,
+    createdAt: o.created_at,
+    author: (o.author ? authorViews.get(o.author.id) : undefined) ?? fallbackAuthor(o.author_id),
+    org: o.org
+      ? {
+          id: o.org.id,
+          name: o.org.name,
+          slug: o.org.slug,
+          logoUrl: o.org.logo_url,
+          verified: o.org.verification_status === "verified",
+        }
+      : null,
+    job: o.job ? { id: o.job.id, title: o.job.title, slug: o.job.slug } : null,
+  });
+
   return rows.map((r) => {
     const postComments = commentsByPost.get(r.id) ?? [];
+    // A post is a repost when it points at an original — or when its body
+    // is empty, which is only possible for a repost whose original was
+    // deleted (ON DELETE SET NULL cleared the pointer; see migration 0016).
+    const originalRaw = r.original_post_id ? originalsById.get(r.original_post_id) : undefined;
+    const isRepost = shareReady && (r.original_post_id != null || r.body === "");
     return {
       id: r.id,
       body: r.body,
@@ -224,6 +334,12 @@ async function assemblePosts(
       likedByMe: likedByMe.has(r.id),
       commentCount: postComments.length,
       comments: postComments.slice(0, POST_COMMENTS_PREVIEW),
+      shareCount: shareCounts.get(r.id) ?? 0,
+      sharedByMe: sharedByMe.has(r.id),
+      isRepost,
+      original: originalRaw ? buildOriginalView(originalRaw) : null,
+      originalUnavailable: isRepost && !originalRaw,
+      shareEnabled: shareReady,
     };
   });
 }
@@ -242,16 +358,17 @@ export async function listFeedPosts(
   const db = createAdminClient();
   const limit = options.limit ?? FEED_PAGE_SIZE;
   try {
-    let query = db
-      .from("posts")
-      .select(POST_SELECT)
-      .order("created_at", { ascending: false })
-      .limit(limit);
-    if (options.before) query = query.lt("created_at", options.before);
-    const { data, error } = await query;
-    if (error) throw error;
-    const rows = (data ?? []) as unknown as RawPost[];
-    const posts = await assemblePosts(db, rows, viewerId);
+    const { rows, shareReady } = await fetchPostRows(async (select) => {
+      let query = db
+        .from("posts")
+        .select(select)
+        .order("created_at", { ascending: false })
+        .limit(limit);
+      if (options.before) query = query.lt("created_at", options.before);
+      const { data, error } = await query;
+      return { data, error };
+    });
+    const posts = await assemblePosts(db, rows, viewerId, shareReady);
     return {
       ready: true,
       data: {
@@ -273,14 +390,16 @@ export async function listOrgPosts(
 ): Promise<FeedRead<FeedPostView[]>> {
   const db = createAdminClient();
   try {
-    const { data, error } = await db
-      .from("posts")
-      .select(POST_SELECT)
-      .eq("org_id", orgId)
-      .order("created_at", { ascending: false })
-      .limit(limit);
-    if (error) throw error;
-    const posts = await assemblePosts(db, (data ?? []) as unknown as RawPost[], viewerId);
+    const { rows, shareReady } = await fetchPostRows(async (select) => {
+      const { data, error } = await db
+        .from("posts")
+        .select(select)
+        .eq("org_id", orgId)
+        .order("created_at", { ascending: false })
+        .limit(limit);
+      return { data, error };
+    });
+    const posts = await assemblePosts(db, rows, viewerId, shareReady);
     return { ready: true, data: posts };
   } catch (e) {
     console.error("[feed] listOrgPosts failed (feed not set up yet?):", e);
@@ -296,14 +415,16 @@ export async function listAuthorPosts(
 ): Promise<FeedRead<FeedPostView[]>> {
   const db = createAdminClient();
   try {
-    const { data, error } = await db
-      .from("posts")
-      .select(POST_SELECT)
-      .eq("author_id", authorId)
-      .order("created_at", { ascending: false })
-      .limit(limit);
-    if (error) throw error;
-    const posts = await assemblePosts(db, (data ?? []) as unknown as RawPost[], viewerId);
+    const { rows, shareReady } = await fetchPostRows(async (select) => {
+      const { data, error } = await db
+        .from("posts")
+        .select(select)
+        .eq("author_id", authorId)
+        .order("created_at", { ascending: false })
+        .limit(limit);
+      return { data, error };
+    });
+    const posts = await assemblePosts(db, rows, viewerId, shareReady);
     return { ready: true, data: posts };
   } catch (e) {
     console.error("[feed] listAuthorPosts failed (feed not set up yet?):", e);
@@ -317,13 +438,15 @@ export async function getFeedPost(
   postId: string,
 ): Promise<FeedPostView | null> {
   const db = createAdminClient();
-  const { data, error } = await db
-    .from("posts")
-    .select(POST_SELECT)
-    .eq("id", postId)
-    .maybeSingle();
-  if (error) throw error;
-  if (!data) return null;
-  const posts = await assemblePosts(db, [data as unknown as RawPost], viewerId);
+  const { rows, shareReady } = await fetchPostRows(async (select) => {
+    const { data, error } = await db
+      .from("posts")
+      .select(select)
+      .eq("id", postId)
+      .maybeSingle();
+    return { data: data ? [data] : [], error };
+  });
+  if (rows.length === 0) return null;
+  const posts = await assemblePosts(db, rows, viewerId, shareReady);
   return posts[0] ?? null;
 }

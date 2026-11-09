@@ -125,4 +125,28 @@ describe("chatbot matcher", () => {
     const m = matchQuestion("I would like to apply for a job");
     expect(m.entry?.id).toBe("apply-for-job");
   });
+
+  it("matches reposting a post", () => {
+    const m = matchQuestion("How do I repost a post?");
+    expect(m.isFallback).toBe(false);
+    expect(m.entry?.id).toBe("share-repost");
+    expect(m.entry?.links?.map((l) => l.href)).toContain("/feed");
+  });
+
+  it("matches sharing a post with your thoughts", () => {
+    const m = matchQuestion("Can I share a post with my own comment on top?");
+    expect(m.entry?.id).toBe("share-repost");
+  });
+
+  it("matches following a company", () => {
+    const m = matchQuestion("How do I follow a company?");
+    expect(m.isFallback).toBe(false);
+    expect(m.entry?.id).toBe("follow");
+    expect(m.entry?.links?.map((l) => l.href)).toContain("/companies");
+  });
+
+  it("does not let 'follow up' hijack application questions", () => {
+    const m = matchQuestion("How do I follow up on my application?");
+    expect(m.entry?.id).not.toBe("follow");
+  });
 });
