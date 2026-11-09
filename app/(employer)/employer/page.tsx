@@ -5,6 +5,8 @@ import { formatDateOnlyKarachi } from "@/lib/format";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Stat } from "@/components/ui/Stat";
 import { Badge } from "@/components/ui/Badge";
+import { Alert } from "@/components/ui/Alert";
+import { deriveResponseStatus } from "@/lib/response-deadline";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
   getOrgContext,
@@ -148,6 +150,15 @@ export default async function EmployerDashboardPage({
   const hiresCount = filteredApps.filter((a) => a.stage === "hired").length;
   const rejectedCount = filteredApps.filter((a) => a.stage === "rejected").length;
   const withdrawnCount = filteredApps.filter((a) => a.stage === "withdrawn").length;
+
+  // ── 5–7 business-day response rule (derived, across all open applications) ──
+  const responseWatch = { overdue: 0, dueSoon: 0 };
+  for (const a of appList) {
+    if (a.stage !== "applied") continue;
+    const s = deriveResponseStatus({ stage: a.stage, submitted_at: a.submitted_at }, now);
+    if (s.kind === "no-response") responseWatch.overdue += 1;
+    else if (s.kind === "due-soon") responseWatch.dueSoon += 1;
+  }
   const upcomingInterviews = ((interviews ?? []) as unknown as Array<{ id: string; scheduled_at: string; status: string; application_id: string }>).filter(
     (i) => !assignedIds || assignedIds.has(i.application_id),
   );
@@ -249,6 +260,25 @@ export default async function EmployerDashboardPage({
         <Stat label="Hires" value={hiresCount} hint="In selected period" />
         <Stat label="Rejected / withdrawn" value={`${rejectedCount} / ${withdrawnCount}`} />
       </section>
+
+      {(responseWatch.overdue > 0 || responseWatch.dueSoon > 0) && (
+        <Alert tone={responseWatch.overdue > 0 ? "error" : "warning"} className="mt-6">
+          <strong>Response rule (5–7 business days):</strong>{" "}
+          {responseWatch.overdue > 0 && (
+            <>{responseWatch.overdue} application{responseWatch.overdue === 1 ? " is" : "s are"} past the 7-business-day response deadline. </>
+          )}
+          {responseWatch.dueSoon > 0 && (
+            <>{responseWatch.dueSoon} application{responseWatch.dueSoon === 1 ? " is" : "s are"} past the day-5 reminder point and due soon. </>
+          )}
+          Unanswered applications show as &ldquo;No response&rdquo; to candidates and lower your public response rate.{" "}
+          <Link
+            href={`/employer/applications?org=${encodeURIComponent(ctx.orgId)}&stage=applied`}
+            className="font-semibold underline"
+          >
+            Review them now
+          </Link>
+        </Alert>
+      )}
 
       <section aria-label="Efficiency metrics" className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat

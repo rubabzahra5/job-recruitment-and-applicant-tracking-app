@@ -4,6 +4,8 @@ import { requireCandidate } from "@/app/(candidate)/_lib/candidate-guard";
 import { StageBadge, stageLabel } from "@/app/(candidate)/_components/StageBadge";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDateKarachi } from "@/lib/format";
+import { deriveResponseStatus } from "@/lib/response-deadline";
+import { ResponseStatusChip } from "@/components/ui/ResponseStatusChip";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
 
@@ -140,7 +142,13 @@ export default async function ApplicationsPage({ searchParams }: PageProps) {
                         Applied {formatDateKarachi(app.submitted_at, { day: "numeric", month: "short", year: "numeric" })}
                       </p>
                     </div>
-                    <StageBadge stage={app.stage} />
+                    <div className="flex shrink-0 flex-col items-end gap-1.5">
+                      <StageBadge stage={app.stage} />
+                      <ResponseStatusChip
+                        audience="candidate"
+                        status={deriveResponseStatus({ stage: app.stage, submitted_at: app.submitted_at })}
+                      />
+                    </div>
                   </div>
                 </Link>
               </li>

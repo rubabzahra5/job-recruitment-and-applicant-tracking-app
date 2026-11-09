@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { cookies } from "next/headers";
 import "./globals.css";
+import { ChatWidget } from "@/components/chat/ChatWidget";
 import { DEFAULT_LOCALE, isRTL, isValidLocale, LOCALE_COOKIE } from "@/lib/i18n";
 
 const inter = Inter({
@@ -32,6 +33,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={locale} dir={dir} className={inter.variable}>
       <body className="min-h-screen bg-white font-sans text-slate-900 antialiased tabular-nums">
         {children}
+        <ChatWidget />
       </body>
     </html>
   );

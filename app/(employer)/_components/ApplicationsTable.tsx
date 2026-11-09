@@ -9,6 +9,7 @@ import { ConfirmDialog } from "@/components/ui/Dialog";
 import { Alert } from "@/components/ui/Alert";
 import { Table, TableBody, TableCell, TableHead, TableHeaderCell, TableRow } from "@/components/ui/Table";
 import { formatDateOnlyKarachi } from "@/lib/format";
+import { EmployerResponseChip } from "@/components/ui/ResponseStatusChip";
 import type { ActionResult } from "../_lib/org";
 import type { BulkMoveResult } from "../employer/applications/actions";
 
@@ -21,6 +22,8 @@ export interface ApplicationRow {
   candidateName: string;
   candidateHeadline: string | null;
   assignees: string[];
+  /** 5–7 business-day response countdown (only for un-responded applications). */
+  responseChip?: { kind: string; businessDaysLeft: number } | null;
 }
 
 interface ApplicationsTableProps {
@@ -248,7 +251,14 @@ export function ApplicationsTable({ orgId, rows, stages, transitions, bulkAction
                   {r.candidateHeadline && <p className="text-xs text-slate-500">{r.candidateHeadline}</p>}
                 </TableCell>
                 <TableCell>{r.jobTitle}</TableCell>
-                <TableCell>{r.stageLabel}</TableCell>
+                <TableCell>
+                  {r.stageLabel}
+                  {r.responseChip && (
+                    <div className="mt-1">
+                      <EmployerResponseChip kind={r.responseChip.kind} businessDaysLeft={r.responseChip.businessDaysLeft} />
+                    </div>
+                  )}
+                </TableCell>
                 <TableCell className="whitespace-nowrap">{formatDateOnlyKarachi(r.submittedAt)}</TableCell>
                 <TableCell className="text-xs text-slate-500">{r.assignees.join(", ") || "—"}</TableCell>
               </TableRow>

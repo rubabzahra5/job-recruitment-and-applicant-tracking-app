@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import {
   requireCandidate,
   getOrCreateCandidateProfile,
@@ -8,6 +9,8 @@ import { computeProfileCompletion } from "@/app/(candidate)/_lib/profile-complet
 import { createAdminClient } from "@/lib/supabase/admin";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Alert } from "@/components/ui/Alert";
+import { Avatar } from "@/components/ui/Avatar";
+import { Badge } from "@/components/ui/Badge";
 import { CVUploadCard } from "./_components/CVUploadCard";
 import {
   ContactForm,
@@ -47,6 +50,8 @@ export default async function CandidateProfilePage() {
     { data: certifications },
     { count: skillsCount },
     { data: cvDocs },
+    { count: applicationsCount },
+    { count: savedJobsCount },
   ] = await Promise.all([
     admin.from("candidate_education").select("*").eq("profile_id", profile.id).order("start_year", { ascending: false, nullsFirst: false }),
     admin.from("candidate_experience").select("*").eq("profile_id", profile.id).order("start_date", { ascending: false }),
@@ -54,6 +59,8 @@ export default async function CandidateProfilePage() {
     admin.from("candidate_certifications").select("*").eq("profile_id", profile.id).order("issued_date", { ascending: false, nullsFirst: false }),
     admin.from("candidate_skills").select("id", { count: "exact", head: true }).eq("profile_id", profile.id),
     admin.from("candidate_documents").select("id").eq("profile_id", profile.id).eq("kind", "cv").eq("is_current_cv", true).limit(1),
+    admin.from("applications").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+    admin.from("saved_jobs").select("id", { count: "exact", head: true }).eq("user_id", user.id),
   ]);
 
   const completion = computeProfileCompletion({
@@ -71,6 +78,48 @@ export default async function CandidateProfilePage() {
         This is what employers see when you apply. We never ask for CNIC, date
         of birth, marital status, photo or religion for ordinary applications.
       </p>
+
+      <Card className="mt-6">
+        <CardContent className="flex flex-col gap-4 py-5 sm:flex-row sm:items-center">
+          <Avatar name={profile.full_name} size="lg" />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-lg font-semibold text-slate-900">{profile.full_name}</p>
+            {profile.headline && <p className="text-sm text-slate-600">{profile.headline}</p>}
+            <p className="mt-0.5 text-sm text-slate-500">
+              {[profile.city, profile.province].filter(Boolean).join(", ") || "Location not set yet"}
+              {(experience ?? []).length > 0 &&
+                ` · ${(experience ?? []).length} role${(experience ?? []).length === 1 ? "" : "s"} of experience listed`}
+            </p>
+            {(skills ?? []).length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {(skills ?? []).slice(0, 8).map((s) => (
+                  <Badge key={s.id as string} tone="neutral">
+                    {s.skill as string}
+                    {s.level ? ` · ${s.level as string}` : ""}
+                  </Badge>
+                ))}
+                {(skills ?? []).length > 8 && (
+                  <Badge tone="neutral">+{(skills ?? []).length - 8} more</Badge>
+                )}
+              </div>
+            )}
+          </div>
+          <nav aria-label="Profile quick links" className="flex shrink-0 flex-wrap gap-2 sm:flex-col sm:items-stretch">
+            <Link href="/candidate/applications" className="rounded-md border border-slate-300 px-3 py-1.5 text-center text-sm font-medium text-slate-700 hover:bg-slate-50">
+              My applications ({applicationsCount ?? 0})
+            </Link>
+            <Link href="/candidate/saved-jobs" className="rounded-md border border-slate-300 px-3 py-1.5 text-center text-sm font-medium text-slate-700 hover:bg-slate-50">
+              Saved jobs ({savedJobsCount ?? 0})
+            </Link>
+            <Link href="/candidate/resume" className="rounded-md border border-slate-300 px-3 py-1.5 text-center text-sm font-medium text-slate-700 hover:bg-slate-50">
+              My CV &amp; resume
+            </Link>
+            <Link href="/candidate/job-alerts" className="rounded-md border border-slate-300 px-3 py-1.5 text-center text-sm font-medium text-slate-700 hover:bg-slate-50">
+              Job alerts
+            </Link>
+          </nav>
+        </CardContent>
+      </Card>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">

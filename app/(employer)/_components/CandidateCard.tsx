@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Clock3, GripVertical } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
+import { EmployerResponseChip } from "@/components/ui/ResponseStatusChip";
 import { formatDateOnlyKarachi, timeAgo } from "@/lib/format";
 
 export interface CandidateCardData {
@@ -12,6 +13,8 @@ export interface CandidateCardData {
   jobTitle: string;
   submittedAt: string;
   assignees: string[];
+  /** 5–7 business-day response countdown (only for un-responded applications). */
+  responseChip?: { kind: string; businessDaysLeft: number } | null;
   detailHref: string;
 }
 
@@ -84,6 +87,11 @@ export function CandidateCard({ card, draggable = false, dragging = false, onDra
           </span>
         )}
       </div>
+      {card.responseChip && (
+        <div className="mt-2">
+          <EmployerResponseChip kind={card.responseChip.kind} businessDaysLeft={card.responseChip.businessDaysLeft} />
+        </div>
+      )}
     </article>
   );
 }

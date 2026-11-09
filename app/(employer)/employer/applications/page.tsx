@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { formatDateOnlyKarachi } from "@/lib/format";
+import { deriveResponseStatus } from "@/lib/response-deadline";
 import { loadPipeline, allowedNextStages, type PipelineLoader } from "@/lib/pipeline";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -119,6 +120,10 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
     })
     .map((a) => {
       const p = profileByUser.get(a.user_id);
+      // 5–7 business-day response rule: countdown for un-responded applications.
+      const rs = a.stage === "applied"
+        ? deriveResponseStatus({ stage: a.stage, submitted_at: a.submitted_at })
+        : null;
       return {
         id: a.id,
         stage: a.stage,
@@ -128,6 +133,7 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
         candidateName: (p?.full_name as string | undefined) ?? "Candidate",
         candidateHeadline: (p?.headline as string | null) ?? null,
         assignees: assigneesByApp.get(a.id) ?? [],
+        responseChip: rs ? { kind: rs.kind, businessDaysLeft: rs.businessDaysLeft } : null,
       };
     });
 
@@ -160,6 +166,7 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
       jobTitle: r.jobTitle,
       submittedAt: r.submittedAt,
       assignees: r.assignees,
+      responseChip: r.responseChip,
       detailHref: `/employer/applications/${r.id}?${orgParam}`,
     });
   }

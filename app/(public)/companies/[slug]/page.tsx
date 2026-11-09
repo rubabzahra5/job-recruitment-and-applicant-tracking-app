@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { formatResponseBadge, getOrgResponsiveness } from "@/lib/responsiveness";
 import { JobCard } from "../../_components/JobCard";
 import {
   getVerifiedOrgBySlug,
@@ -33,6 +34,16 @@ export default async function CompanyDetailPage({ params }: { params: Promise<Pa
   if (!org) notFound();
 
   const result = await searchJobs(db, { orgId: org.id, sort: "newest", perPage: 50 });
+  const responsiveness = await getOrgResponsiveness(org.id).catch(() => null);
+  const responseBadge = responsiveness ? formatResponseBadge(responsiveness) : null;
+  // Locations served, derived from where this company is actually hiring.
+  const citiesServed = [
+    ...new Set(
+      result.jobs
+        .map((j) => (j.workplace === "remote" ? "Remote" : j.location?.city))
+        .filter((c): c is string => Boolean(c)),
+    ),
+  ];
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
@@ -59,9 +70,16 @@ export default async function CompanyDetailPage({ params }: { params: Promise<Pa
               </h1>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <Badge tone="success">✓ Verified employer</Badge>
+                <Badge tone="info">Responds within 5–7 business days</Badge>
+                {responseBadge && <Badge tone="neutral">{responseBadge}</Badge>}
                 {org.industry && <Badge tone="neutral">{org.industry}</Badge>}
                 {org.size_range && <Badge tone="neutral">{org.size_range} employees</Badge>}
               </div>
+              {citiesServed.length > 0 && (
+                <p className="mt-2 text-sm text-slate-500">
+                  Hiring in: {citiesServed.join(" · ")}
+                </p>
+              )}
               {org.website && (
                 <a
                   href={org.website}
@@ -90,7 +108,7 @@ export default async function CompanyDetailPage({ params }: { params: Promise<Pa
         {result.jobs.length > 0 ? (
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             {result.jobs.map((j) => (
-              <JobCard key={j.id} job={j} />
+              <JobCard key={j.id} job={j} responseBadge={responseBadge} />
             ))}
           </div>
         ) : (

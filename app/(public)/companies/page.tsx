@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { formatResponseBadge, getOrgsResponsiveness } from "@/lib/responsiveness";
 import {
   getLiveJobCounts,
   getVerifiedOrgs,
@@ -17,6 +19,7 @@ export const metadata: Metadata = {
 export default async function CompaniesPage() {
   const db = await publicClient();
   const [orgs, counts] = await Promise.all([getVerifiedOrgs(db, 200), getLiveJobCounts(db)]);
+  const responsiveness = await getOrgsResponsiveness(orgs.map((o) => o.id));
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
@@ -31,6 +34,8 @@ export default async function CompaniesPage() {
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {orgs.map((o) => {
             const jobCount = counts.byOrg.get(o.id) ?? 0;
+            const resp = responsiveness.get(o.id);
+            const responseBadge = resp ? formatResponseBadge(resp) : null;
             return (
               <Link key={o.slug} href={`/companies/${o.slug}`}>
                 <Card className="flex h-full flex-col p-5 transition-shadow hover:shadow-md">
@@ -47,6 +52,11 @@ export default async function CompaniesPage() {
                       <p className="truncate font-semibold text-slate-900">{o.name}</p>
                       <p className="text-sm text-slate-500">{o.industry ?? "Employer"}</p>
                     </div>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    <Badge tone="success">✓ Verified employer</Badge>
+                    <Badge tone="info">Responds within 5–7 business days</Badge>
+                    {responseBadge && <Badge tone="neutral">{responseBadge}</Badge>}
                   </div>
                   {o.about && <p className="mt-3 line-clamp-3 text-sm text-slate-600">{o.about}</p>}
                   <p className="mt-3 text-sm font-medium text-brand-700">

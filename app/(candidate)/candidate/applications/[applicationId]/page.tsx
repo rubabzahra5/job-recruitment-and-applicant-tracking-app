@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { requireCandidate } from "@/app/(candidate)/_lib/candidate-guard";
 import { StageBadge, stageLabel } from "@/app/(candidate)/_components/StageBadge";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { formatDateKarachi, formatSalaryRange, timeAgo } from "@/lib/format";
+import { formatDateKarachi, formatDateOnlyKarachi, formatSalaryRange, timeAgo } from "@/lib/format";
+import { deriveResponseStatus } from "@/lib/response-deadline";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Alert } from "@/components/ui/Alert";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -113,6 +114,18 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
 
   const job = app.job;
 
+  // 5–7 business-day response rule, derived from the status history.
+  const responseStatus = deriveResponseStatus({
+    stage: app.stage,
+    submitted_at: app.submitted_at,
+    statusHistory: ((history ?? []) as HistoryRow[]).map((h) => ({
+      from_stage: h.from_stage,
+      to_stage: h.to_stage,
+      created_at: h.created_at,
+    })),
+  });
+  const deadlineLabel = formatDateOnlyKarachi(responseStatus.deadline);
+
   return (
     <main>
       <p className="mb-4 text-sm text-slate-500">
@@ -135,6 +148,42 @@ export default async function ApplicationDetailPage({ params }: PageProps) {
           <WithdrawButton applicationId={app.id} canWithdraw={WITHDRAWABLE.has(app.stage)} />
         </div>
       </div>
+
+      {responseStatus.kind === "awaiting" && (
+        <Alert tone="info" className="mt-4">
+          Response rule: {job?.org?.name ?? "the employer"} must give you a first
+          response by <strong>{deadlineLabel}</strong> — TalentBridge requires
+          companies to respond to every application within 7 business days
+          (In review, moving forward, or a rejection all count).
+        </Alert>
+      )}
+      {responseStatus.kind === "due-soon" && (
+        <Alert tone="warning" className="mt-4">
+          Still waiting: the response deadline is <strong>{deadlineLabel}</strong>.
+          The 5-business-day reminder point has passed, so the employer has been
+          nudged.
+        </Alert>
+      )}
+      {responseStatus.kind === "no-response" && (
+        <Alert tone="error" className="mt-4">
+          No response from employer. The 7-business-day deadline ({deadlineLabel})
+          passed without a reply. This counts against the company&apos;s public
+          response rate — on TalentBridge, silence is never hidden.
+        </Alert>
+      )}
+      {responseStatus.kind === "responded" && responseStatus.onTime && responseStatus.respondedAt && (
+        <Alert tone="success" className="mt-4">
+          The employer responded on {formatDateOnlyKarachi(responseStatus.respondedAt)} —
+          within the 7-business-day response rule.
+        </Alert>
+      )}
+      {responseStatus.kind === "responded" && responseStatus.onTime === false && responseStatus.respondedAt && (
+        <Alert tone="warning" className="mt-4">
+          The employer responded on {formatDateOnlyKarachi(responseStatus.respondedAt)} —
+          after the 7-business-day deadline ({deadlineLabel}). Late responses
+          lower the company&apos;s public response rate.
+        </Alert>
+      )}
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
