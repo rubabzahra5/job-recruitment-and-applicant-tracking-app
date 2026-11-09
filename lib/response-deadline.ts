@@ -135,7 +135,23 @@ export function getFirstResponseAt(app: ApplicationResponseInput): Date | null {
         (h.from_stage === "applied" || h.from_stage == null);
       if (isResponse) return new Date(h.created_at);
     }
-    return null; // History is authoritative: no employer response recorded.
+    // History exists but records no response transition out of `applied`.
+    // That happens for applications created before history tracking or via
+    // direct data loads, where the stage was set without a history row.
+    // The current stage is then the evidence: if the application has
+    // visibly progressed beyond `applied`, the employer DID respond —
+    // use the earliest recorded move out of `applied` if one exists,
+    // otherwise the application's last update.
+    for (const h of sorted) {
+      if (h.to_stage !== "applied" && h.to_stage !== "withdrawn") {
+        return new Date(h.created_at);
+      }
+    }
+    if (app.stage !== "applied" && app.stage !== "withdrawn" && app.updated_at) {
+      const d = new Date(app.updated_at);
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+    return null; // No response recorded and the stage agrees: still in `applied`.
   }
   if (app.stage !== "applied" && app.stage !== "withdrawn" && app.updated_at) {
     const d = new Date(app.updated_at);

@@ -88,6 +88,41 @@ describe("getFirstResponseAt", () => {
     expect(getFirstResponseAt({ stage: "applied", submitted_at: MON, updated_at: MON })).toBeNull();
     expect(getFirstResponseAt({ stage: "applied", submitted_at: MON, statusHistory: [] })).toBeNull();
   });
+
+  it("falls back to updated_at when history exists but the stage was set without a history row", () => {
+    // Seeded / pre-history-tracking data: no history rows at all, but the
+    // application visibly progressed — the employer did respond.
+    const at = getFirstResponseAt({
+      stage: "shortlisted",
+      submitted_at: MON,
+      updated_at: "2026-10-08T10:00:00+05:00",
+      statusHistory: [],
+    });
+    expect(at?.toISOString()).toBe("2026-10-08T05:00:00.000Z");
+  });
+
+  it("falls back to updated_at when history holds only the creation row but the stage progressed", () => {
+    const at = getFirstResponseAt({
+      stage: "interview_scheduled",
+      submitted_at: MON,
+      updated_at: "2026-10-09T10:00:00+05:00",
+      statusHistory: [{ from_stage: null, to_stage: "applied", created_at: MON }],
+    });
+    expect(at?.toISOString()).toBe("2026-10-09T05:00:00.000Z");
+  });
+
+  it("uses the earliest recorded move out of 'applied' when the exit transition itself is missing", () => {
+    const at = getFirstResponseAt({
+      stage: "shortlisted",
+      submitted_at: MON,
+      updated_at: "2026-10-12T10:00:00+05:00",
+      statusHistory: [
+        { from_stage: null, to_stage: "applied", created_at: MON },
+        { from_stage: "initial_screening", to_stage: "shortlisted", created_at: "2026-10-09T10:00:00+05:00" },
+      ],
+    });
+    expect(at?.toISOString()).toBe("2026-10-09T05:00:00.000Z");
+  });
 });
 
 describe("deriveResponseStatus", () => {
