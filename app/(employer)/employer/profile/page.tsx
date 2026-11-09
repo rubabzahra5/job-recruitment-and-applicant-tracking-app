@@ -3,8 +3,8 @@ import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { getOrgContext, NoOrganizationError } from "../../_lib/org";
 import { NoOrgState } from "../../_components/NoOrgState";
-import { OrgProfileForm, OrgLogoUpload } from "../../_components/OrgProfileForm";
-import { getOrgProfile, updateOrgProfile, uploadOrgLogo } from "./actions";
+import { OrgProfileForm, OrgLogoUpload, OrgCoverUpload } from "../../_components/OrgProfileForm";
+import { getOrgProfile, updateOrgProfile, uploadOrgLogo, uploadOrgCover } from "./actions";
 
 export const metadata: Metadata = { title: "Organization profile" };
 
@@ -45,6 +45,23 @@ export default async function OrgProfilePage({ searchParams }: { searchParams: P
             )}
             {canEdit && <OrgLogoUpload uploadAction={uploadOrgLogo.bind(null, ctx.orgId)} />}
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="mt-4">
+        <CardHeader>
+          <CardTitle>Cover image</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {profile.coverUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={profile.coverUrl} alt={`${profile.name} cover`} className="mb-4 h-36 w-full rounded border border-slate-200 object-cover" />
+          ) : (
+            <div className="mb-4 flex h-36 w-full items-center justify-center rounded border border-dashed border-slate-300 text-xs text-slate-400">
+              No cover image — your public page shows a plain header
+            </div>
+          )}
+          {canEdit && <OrgCoverUpload uploadAction={uploadOrgCover.bind(null, ctx.orgId)} />}
         </CardContent>
       </Card>
 

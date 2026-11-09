@@ -284,7 +284,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
     question: "How is my personal data handled?",
     keywords: ["privacy", "my data", "personal data", "data protection", "who sees my profile", "safe data"],
     answer:
-      "Your profile is only shown to employers you apply to — candidates never get public profiles on TalentBridge. We don't ask for CNIC, date of birth, marital status, photos or religion for ordinary applications. The full details are in the privacy policy.",
+      "Your profile is private by default: it is only shown to employers you apply to (or who you allow to find you). You can optionally switch on a public profile page from your profile settings — even then, your email, phone number and CV file are never shown publicly. We don't ask for CNIC, date of birth, marital status, photos or religion for ordinary applications. The full details are in the privacy policy.",
     links: [{ label: "Privacy policy", href: "/privacy" }],
   },
   {
@@ -299,7 +299,7 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
     question: "What can I see on a company page?",
     keywords: ["company page", "companies", "employer profile", "about company", "company details", "list of companies"],
     answer:
-      "Each verified company has a public page with its story, industry, size, where it's hiring, its response-rate badge and all its open jobs — so you can research an employer before you apply.",
+      "Each verified company has a public page with its story, industry, size, where it's hiring, its response-rate badge, all its open jobs, and its latest community feed posts — so you can research an employer before you apply. Employers keep every detail up to date from their portal.",
     links: [{ label: "Browse companies", href: "/companies" }],
   },
   {
@@ -420,6 +420,44 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
     answer:
       "You'll get in-app notifications (and emails for the important moments) when your application moves stages, an interview is scheduled, or an offer arrives. Check the notifications bell in your portal any time.",
     links: [{ label: "My notifications", href: "/candidate/notifications" }],
+  },
+  {
+    id: "community-feed",
+    question: "What is the community feed?",
+    keywords: ["feed", "the feed", "community feed", "news feed", "social feed", "timeline", "posts", "community"],
+    answer:
+      "The Feed is TalentBridge's community page — a bit like LinkedIn. Everyone with an account can post: candidates share career updates and milestones, and companies post announcements and share open jobs. You can like and comment on posts, and clicking a company takes you to its profile. Log in to see it.",
+    links: [
+      { label: "Open the feed", href: "/feed" },
+      { label: "Log in", href: "/login" },
+    ],
+  },
+  {
+    id: "post-to-feed",
+    question: "How do I post to the feed?",
+    keywords: ["post to the feed", "post an update", "share an update", "create a post", "write a post", "post update", "announce on the feed", "share a job on the feed"],
+    answer:
+      "Open the Feed and write in the box at the top (up to 2,000 characters), then press Post. If you belong to a company you can choose to post as the company instead, and attach one of its published jobs to the post. You can delete your own posts at any time.",
+    links: [{ label: "Open the feed", href: "/feed" }],
+  },
+  {
+    id: "like-comment",
+    question: "How do likes and comments work on the feed?",
+    keywords: ["like a post", "like post", "comment on a post", "comment", "react to a post", "like and comment"],
+    answer:
+      "On any feed post, tap Like to appreciate it, or open Comments to read and join the conversation (comments can be up to 500 characters). You can delete your own comments, and post authors can remove their posts.",
+    links: [{ label: "Open the feed", href: "/feed" }],
+  },
+  {
+    id: "public-profile",
+    question: "How do public profiles work, and how do I make mine public?",
+    keywords: ["public profile", "make my profile public", "make profile public", "profile public", "share my profile", "public page", "people page", "switch on profile"],
+    answer:
+      "Every candidate can have a public profile page showing their headline, summary, skills, experience, education and feed posts — but it is OFF by default for your privacy. To switch it on, go to My Profile in your portal and use the 'Public profile' toggle; you'll get a 'View my public page' link to share. Your email, phone number and CV file are never shown on the public page.",
+    links: [
+      { label: "My profile settings", href: "/candidate/profile" },
+      { label: "Open the feed", href: "/feed" },
+    ],
   },
   {
     id: "greeting",

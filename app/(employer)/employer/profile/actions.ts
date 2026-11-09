@@ -33,6 +33,7 @@ export type OrgProfileInput = z.infer<typeof profileSchema>;
 export interface OrgProfileData {
   name: string;
   logoUrl: string | null;
+  coverUrl: string | null;
   about: string | null;
   industry: string | null;
   website: string | null;
@@ -50,7 +51,7 @@ export async function getOrgProfile(orgId: string): Promise<OrgProfileData> {
   const admin = createAdminClient();
   const { data: org } = await admin
     .from("organizations")
-    .select("name,logo_url,about,industry,website,contact_email,contact_phone,size_range,verification_status")
+    .select("name,logo_url,cover_url,about,industry,website,contact_email,contact_phone,size_range,verification_status")
     .eq("id", orgId)
     .single();
   if (!org) throw new Error("Organization not found.");
@@ -58,6 +59,7 @@ export async function getOrgProfile(orgId: string): Promise<OrgProfileData> {
   return {
     name: org.name as string,
     logoUrl: (org.logo_url as string | null) ?? null,
+    coverUrl: (org.cover_url as string | null) ?? null,
     about: (org.about as string | null) ?? null,
     industry: (org.industry as string | null) ?? null,
     website: (org.website as string | null) ?? null,
@@ -159,6 +161,47 @@ export async function uploadOrgLogo(orgId: string, formData: FormData): Promise<
     if (updateError) throw new Error(`Failed to save logo: ${updateError.message}`);
 
     await writeAudit({ actorUserId: user.id, action: "organization.logo_uploaded", entityType: "organization", entityId: orgId, orgId });
+    revalidateEmployer();
+    return okResult();
+  } catch (e) {
+    return failResult(e);
+  }
+}
+
+/**
+ * Upload the org cover image (org_admin only). Same validation as the logo
+ * (5 MB, PNG/JPEG magic bytes, org-logos bucket); the public URL is saved
+ * on organizations.cover_url and shown as the banner on the public
+ * company page — the one organizations field that previously had no editor.
+ */
+export async function uploadOrgCover(orgId: string, formData: FormData): Promise<ActionResult> {
+  try {
+    const user = await requireSessionUser();
+    await requireOrgRole(user.id, orgId, ["org_admin"]);
+    const file = formData.get("cover");
+    if (!(file instanceof File) || file.size === 0) throw new Error("Select a cover image file.");
+    if (file.size > MAX_LOGO_BYTES) throw new Error("Cover image exceeds the 5 MB limit.");
+
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const mime = sniffImageMime(bytes);
+    if (!mime) throw new Error("Cover image must be a PNG or JPEG image.");
+    const ext = mime === "image/png" ? "png" : "jpg";
+
+    const admin = createAdminClient();
+    const path = `${orgId}/cover-${crypto.randomUUID()}.${ext}`;
+    const { error: uploadError } = await admin.storage
+      .from("org-logos")
+      .upload(path, bytes, { contentType: mime, upsert: false });
+    if (uploadError) throw new Error(`Upload failed: ${uploadError.message}`);
+
+    const { data } = admin.storage.from("org-logos").getPublicUrl(path);
+    const { error: updateError } = await admin
+      .from("organizations")
+      .update({ cover_url: data.publicUrl })
+      .eq("id", orgId);
+    if (updateError) throw new Error(`Failed to save cover image: ${updateError.message}`);
+
+    await writeAudit({ actorUserId: user.id, action: "organization.cover_uploaded", entityType: "organization", entityId: orgId, orgId });
     revalidateEmployer();
     return okResult();
   } catch (e) {

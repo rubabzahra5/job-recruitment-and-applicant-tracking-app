@@ -5,8 +5,14 @@ import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { getSessionUser } from "@/lib/auth";
+import { listOrgPosts } from "@/lib/feed";
+import type { FeedAuthorView } from "@/lib/feed-shared";
 import { formatResponseBadge, getOrgResponsiveness } from "@/lib/responsiveness";
+import { isSuperAdmin } from "@/lib/rbac";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { JobCard } from "../../_components/JobCard";
+import { PostList } from "../../_components/PostList";
 import {
   getVerifiedOrgBySlug,
   publicClient,
@@ -36,6 +42,36 @@ export default async function CompanyDetailPage({ params }: { params: Promise<Pa
   const result = await searchJobs(db, { orgId: org.id, sort: "newest", perPage: 50 });
   const responsiveness = await getOrgResponsiveness(org.id).catch(() => null);
   const responseBadge = responsiveness ? formatResponseBadge(responsiveness) : null;
+
+  // Community feed posts published as this company (fail-soft: the section
+  // shows a "being set up" state until migration 0015 has run).
+  const viewer = await getSessionUser();
+  const orgPosts = await listOrgPosts(viewer?.id ?? null, org.id);
+  let postViewer: ({ id: string; isSuperAdmin: boolean; author: FeedAuthorView }) | null = null;
+  if (viewer) {
+    const admin = createAdminClient();
+    const [{ data: vAccount }, { data: vCandidate }, vAdmin] = await Promise.all([
+      admin.from("profiles").select("display_name, email, profile_public").eq("id", viewer.id).maybeSingle(),
+      admin.from("candidate_profiles").select("full_name, headline").eq("user_id", viewer.id).maybeSingle(),
+      isSuperAdmin(viewer.id).catch(() => false),
+    ]);
+    postViewer = {
+      id: viewer.id,
+      isSuperAdmin: vAdmin,
+      author: {
+        id: viewer.id,
+        name:
+          (vCandidate?.full_name as string | undefined) ??
+          (vAccount?.display_name as string | null) ??
+          (vAccount?.email as string | null)?.split("@")[0] ??
+          viewer.email?.split("@")[0] ??
+          "Member",
+        headline: (vCandidate?.headline as string | null) ?? null,
+        isCandidate: Boolean(vCandidate),
+        profilePublic: vAccount?.profile_public === true,
+      },
+    };
+  }
   // Locations served, derived from where this company is actually hiring.
   const citiesServed = [
     ...new Set(
@@ -53,7 +89,15 @@ export default async function CompanyDetailPage({ params }: { params: Promise<Pa
         <span aria-current="page" className="text-slate-700">{org.name}</span>
       </nav>
 
-      <Card className="mt-4">
+      <Card className="mt-4 overflow-hidden">
+        {org.cover_url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={org.cover_url}
+            alt=""
+            className="h-40 w-full object-cover md:h-52"
+          />
+        )}
         <CardContent className="pt-6">
           <div className="flex items-start gap-5">
             {org.logo_url ? (
@@ -127,6 +171,25 @@ export default async function CompanyDetailPage({ params }: { params: Promise<Pa
             />
           </div>
         )}
+      </section>
+
+      <section className="mt-10" aria-label={`Posts from ${org.name}`}>
+        <h2 className="text-xl font-bold text-slate-900">Posts</h2>
+        <div className="mt-4">
+          {!orgPosts.ready ? (
+            <EmptyState
+              title="Company posts are being set up"
+              description={`Posts from ${org.name} will appear here once the community feed setup is complete.`}
+            />
+          ) : (
+            <PostList
+              initialPosts={orgPosts.data}
+              viewer={postViewer}
+              emptyTitle="No posts yet"
+              emptyDescription={`${org.name} hasn't posted to the community feed yet.`}
+            />
+          )}
+        </div>
       </section>
 
       <Card className="mt-10">

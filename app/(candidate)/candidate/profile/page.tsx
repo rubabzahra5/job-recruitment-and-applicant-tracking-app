@@ -12,6 +12,7 @@ import { Alert } from "@/components/ui/Alert";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { CVUploadCard } from "./_components/CVUploadCard";
+import { PublicProfileToggle } from "./_components/PublicProfileToggle";
 import {
   ContactForm,
   SummaryForm,
@@ -52,6 +53,7 @@ export default async function CandidateProfilePage() {
     { data: cvDocs },
     { count: applicationsCount },
     { count: savedJobsCount },
+    accountResult,
   ] = await Promise.all([
     admin.from("candidate_education").select("*").eq("profile_id", profile.id).order("start_year", { ascending: false, nullsFirst: false }),
     admin.from("candidate_experience").select("*").eq("profile_id", profile.id).order("start_date", { ascending: false }),
@@ -61,6 +63,9 @@ export default async function CandidateProfilePage() {
     admin.from("candidate_documents").select("id").eq("profile_id", profile.id).eq("kind", "cv").eq("is_current_cv", true).limit(1),
     admin.from("applications").select("id", { count: "exact", head: true }).eq("user_id", user.id),
     admin.from("saved_jobs").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+    // profile_public arrives with migration 0015; the query errors until
+    // then and the toggle renders in its "being set up" state (fail soft).
+    admin.from("profiles").select("profile_public").eq("id", user.id).maybeSingle(),
   ]);
 
   const completion = computeProfileCompletion({
@@ -118,6 +123,19 @@ export default async function CandidateProfilePage() {
               Job alerts
             </Link>
           </nav>
+        </CardContent>
+      </Card>
+
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Public profile</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PublicProfileToggle
+            userId={user.id}
+            initialPublic={accountResult.data?.profile_public === true}
+            setupPending={Boolean(accountResult.error)}
+          />
         </CardContent>
       </Card>
 

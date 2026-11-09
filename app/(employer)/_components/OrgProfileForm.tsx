@@ -185,3 +185,47 @@ export function OrgLogoUpload({ uploadAction }: { uploadAction: (formData: FormD
     </div>
   );
 }
+
+/** Cover image upload (PNG/JPEG, 5 MB) — shown as the banner on the public company page. */
+export function OrgCoverUpload({ uploadAction }: { uploadAction: (formData: FormData) => Promise<ActionResult> }) {
+  const [file, setFile] = React.useState<File | null>(null);
+  const [working, setWorking] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const upload = async () => {
+    if (!file) return;
+    setWorking(true);
+    setError(null);
+    const fd = new FormData();
+    fd.append("cover", file);
+    const res = await uploadAction(fd);
+    setWorking(false);
+    if (!res.ok) setError(res.error);
+    else window.location.reload();
+  };
+
+  return (
+    <div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Input
+          type="file"
+          accept="image/png,image/jpeg"
+          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          aria-label="Organization cover image"
+          className="max-w-xs"
+        />
+        <Button variant="outline" disabled={!file} isLoading={working} onClick={upload}>
+          Upload cover
+        </Button>
+      </div>
+      <p className="mt-1 text-xs text-slate-500">
+        PNG or JPEG, max 5 MB. A wide banner (about 3:1) looks best on your public company page.
+      </p>
+      {error && (
+        <p className="mt-1 text-sm text-red-600" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}

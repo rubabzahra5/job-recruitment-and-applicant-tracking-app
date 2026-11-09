@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 
 const LINKS = [
   { href: "/employer", label: "Dashboard", exact: true },
+  { href: "/feed", label: "Feed" },
   { href: "/employer/jobs", label: "Jobs" },
   { href: "/employer/applications", label: "Applications" },
   { href: "/employer/interviews", label: "Interviews" },

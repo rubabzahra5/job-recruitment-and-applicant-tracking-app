@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 
 const NAV_ITEMS: Array<{ href: string; label: string; exact?: boolean }> = [
   { href: "/candidate", label: "Dashboard", exact: true },
+  { href: "/feed", label: "Feed" },
   { href: "/candidate/profile", label: "Profile" },
   { href: "/candidate/resume", label: "Resume" },
   { href: "/candidate/applications", label: "Applications" },

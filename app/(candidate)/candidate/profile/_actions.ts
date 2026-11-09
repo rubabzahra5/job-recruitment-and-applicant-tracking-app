@@ -159,6 +159,34 @@ export async function updateSummary(input: SummaryInput): Promise<ActionResult> 
   }
 }
 
+// ─── Public profile (opt-in, migration 0015) ────────────────────────────────
+
+/**
+ * Switch the candidate's public profile page (/people/[userId]) on or off.
+ * Stored on profiles.profile_public; default is OFF (private). Fails with a
+ * friendly message before migration 0015 has added the column.
+ */
+export async function setProfilePublic(isPublic: boolean): Promise<ActionResult> {
+  try {
+    const user = await requireCandidate();
+    const admin = createAdminClient();
+    const { error } = await admin
+      .from("profiles")
+      .update({ profile_public: isPublic })
+      .eq("id", user.id);
+    if (error) {
+      return fail(
+        "Public profiles are still being set up on TalentBridge. Please try again soon.",
+      );
+    }
+    revalidatePath("/candidate/profile");
+    revalidatePath(`/people/${user.id}`);
+    return okResult;
+  } catch (err) {
+    return fail(err instanceof Error ? err.message : "Failed to update public profile setting.");
+  }
+}
+
 // ─── Preferences ────────────────────────────────────────────────────────────
 
 export async function updatePreferences(input: PreferencesInput): Promise<ActionResult> {

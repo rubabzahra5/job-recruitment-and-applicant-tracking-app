@@ -11,7 +11,7 @@ import { createServerClient } from "@supabase/ssr";
  */
 const SIGN_IN_PATH = "/login";
 
-const PROTECTED_PREFIXES = ["/candidate", "/employer", "/control-center"];
+const PROTECTED_PREFIXES = ["/candidate", "/employer", "/control-center", "/feed"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -53,5 +53,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/candidate/:path*", "/employer/:path*", "/control-center/:path*"],
+  matcher: ["/candidate/:path*", "/employer/:path*", "/control-center/:path*", "/feed/:path*"],
 };

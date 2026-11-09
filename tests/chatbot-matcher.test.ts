@@ -92,4 +92,37 @@ describe("chatbot matcher", () => {
   it("normalizes punctuation and case", () => {
     expect(normalizeQuestion("  How DO I Apply?! ")).toBe("how do i apply");
   });
+
+  it("matches a question about the community feed", () => {
+    const m = matchQuestion("What is the community feed?");
+    expect(m.isFallback).toBe(false);
+    expect(m.entry?.id).toBe("community-feed");
+    expect(m.entry?.links?.map((l) => l.href)).toContain("/feed");
+  });
+
+  it("matches how to post an update", () => {
+    const m = matchQuestion("How can I post an update to the feed?");
+    expect(m.entry?.id).toBe("post-to-feed");
+  });
+
+  it("matches sharing a job on the feed", () => {
+    const m = matchQuestion("Can I share a job on the feed?");
+    expect(m.entry?.id).toBe("post-to-feed");
+  });
+
+  it("matches liking and commenting", () => {
+    const m = matchQuestion("How do I like a post and comment on a post?");
+    expect(m.entry?.id).toBe("like-comment");
+  });
+
+  it("matches making a profile public", () => {
+    const m = matchQuestion("How do I make my profile public?");
+    expect(m.entry?.id).toBe("public-profile");
+    expect(m.entry?.links?.map((l) => l.href)).toContain("/candidate/profile");
+  });
+
+  it("does not let the word 'like' hijack job questions", () => {
+    const m = matchQuestion("I would like to apply for a job");
+    expect(m.entry?.id).toBe("apply-for-job");
+  });
 });
