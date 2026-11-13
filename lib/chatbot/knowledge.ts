@@ -414,6 +414,14 @@ export const KNOWLEDGE: KnowledgeEntry[] = [
     links: [{ label: "Read the FAQ", href: "/faq" }],
   },
   {
+    id: "general-questions-ai",
+    question: "Can the assistant answer general questions?",
+    keywords: ["general questions", "general question", "ai", "artificial intelligence", "chatgpt", "ask anything", "other questions"],
+    answer:
+      "Yes, within limits. Questions about TalentBridge — jobs, applying, your account, employer tools — I answer from the site's own help so nothing is made up. For other, general questions I may bring in an AI assistant to help. And if something needs a real person, our support team is one message away on the contact page.",
+    links: [{ label: "Contact support", href: "/contact" }],
+  },
+  {
     id: "notifications",
     question: "How do notifications work?",
     keywords: ["notifications", "updates", "email updates", "how will i know", "alerts about application"],

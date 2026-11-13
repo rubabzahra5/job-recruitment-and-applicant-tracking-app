@@ -5,11 +5,18 @@ import Link from "next/link";
 import { MessageCircle, Send, X } from "lucide-react";
 import { CHAT_SUGGESTIONS, type ChatLink } from "@/lib/chatbot/knowledge";
 import { matchQuestion, relatedEntries } from "@/lib/chatbot/matcher";
+import {
+  detectHumanIntent,
+  HANDOVER_LINKS,
+  HANDOVER_TEXT,
+} from "@/lib/chatbot/ai";
 
 interface ChatMessage {
   role: "user" | "assistant";
   text: string;
   links?: ChatLink[];
+  /** True for the temporary "thinking" bubble while /api/chat responds. */
+  pending?: boolean;
 }
 
 const WELCOME: ChatMessage = {
@@ -18,18 +25,34 @@ const WELCOME: ChatMessage = {
 };
 
 /**
- * Site-wide, rule-based help chat. Fully client-side: it matches questions
- * against the local knowledge base (lib/chatbot) — no external AI service,
- * in line with TalentBridge's free-tier rule. Unknown questions get a
- * friendly fallback pointing at /faq and /contact, never an invented answer.
+ * Site-wide help chat for the TalentBridge Assistant.
+ *
+ * Fallback chain:
+ * 1. A direct request for a human ("talk to a human", "customer support"…)
+ *    hands over immediately — no matching, no server call.
+ * 2. Site questions are matched against the local knowledge base
+ *    (lib/chatbot) — fully client-side, no external service, in line with
+ *    TalentBridge's free-tier rule.
+ * 3. Only when the knowledge base falls back (an unrelated question) does
+ *    the widget ask the server route /api/chat, which may answer via Groq
+ *    AI or signal a human handover. If that route is disabled,
+ *    rate-limited or unavailable, the widget shows exactly the classic
+ *    fallback pointing at /faq and /contact — never an invented answer.
  */
 export function ChatWidget() {
   const [open, setOpen] = React.useState(false);
   const [messages, setMessages] = React.useState<ChatMessage[]>([WELCOME]);
   const [input, setInput] = React.useState("");
   const [suggestions, setSuggestions] = React.useState<string[]>(CHAT_SUGGESTIONS);
+  const [busy, setBusy] = React.useState(false);
   const logRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const messagesRef = React.useRef(messages);
+  const busyRef = React.useRef(false);
+
+  React.useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   React.useEffect(() => {
     const log = logRef.current;
@@ -42,22 +65,95 @@ export function ChatWidget() {
 
   const ask = React.useCallback((raw: string) => {
     const text = raw.trim();
-    if (!text) return;
+    if (!text || busyRef.current) return;
+
+    // 1. A direct request for a human hands over immediately.
+    if (detectHumanIntent(text)) {
+      setMessages((prev) => [
+        ...prev,
+        { role: "user", text },
+        { role: "assistant", text: HANDOVER_TEXT, links: HANDOVER_LINKS },
+      ]);
+      setSuggestions(CHAT_SUGGESTIONS);
+      setInput("");
+      return;
+    }
+
     const match = matchQuestion(text);
-    const reply: ChatMessage = match.isFallback
-      ? { role: "assistant", text: match.fallbackText, links: match.fallbackLinks }
-      : {
+
+    // 2. Knowledge-base hit — unchanged, fully client-side.
+    if (!match.isFallback && match.entry) {
+      setMessages((prev) => [
+        ...prev,
+        { role: "user", text },
+        {
           role: "assistant",
           text: match.entry!.answer,
           links: match.entry!.links,
-        };
-    setMessages((prev) => [...prev, { role: "user", text }, reply]);
-    setSuggestions(
-      !match.isFallback && match.entry
-        ? relatedEntries(match.entry).map((e) => e.question)
-        : CHAT_SUGGESTIONS,
-    );
+        },
+      ]);
+      setSuggestions(relatedEntries(match.entry).map((e) => e.question));
+      setInput("");
+      return;
+    }
+
+    // 3. Knowledge-base fallback (unrelated question): ask /api/chat,
+    //    which may answer with Groq AI. Every non-answer outcome resolves
+    //    to exactly the classic fallback reply.
+    const fallbackReply: ChatMessage = {
+      role: "assistant",
+      text: match.fallbackText,
+      links: match.fallbackLinks,
+    };
+    const history = messagesRef.current
+      .filter((m) => !m.pending)
+      .slice(-6)
+      .map((m) => ({ role: m.role, text: m.text }));
+
+    busyRef.current = true;
+    setBusy(true);
+    setMessages((prev) => [
+      ...prev,
+      { role: "user", text },
+      { role: "assistant", text: "Thinking…", pending: true },
+    ]);
+    setSuggestions(CHAT_SUGGESTIONS);
     setInput("");
+
+    const resolve = (reply: ChatMessage) => {
+      setMessages((prev) => prev.map((m) => (m.pending ? reply : m)));
+      busyRef.current = false;
+      setBusy(false);
+    };
+
+    fetch("/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: text, history }),
+    })
+      .then(async (res) => {
+        const data = (await res.json().catch(() => null)) as {
+          mode?: string;
+          text?: unknown;
+        } | null;
+        if (
+          data?.mode === "answer" &&
+          typeof data.text === "string" &&
+          data.text.trim()
+        ) {
+          resolve({ role: "assistant", text: data.text });
+        } else if (data?.mode === "handover") {
+          resolve({
+            role: "assistant",
+            text: HANDOVER_TEXT,
+            links: HANDOVER_LINKS,
+          });
+        } else {
+          // disabled | unavailable | rate_limited | unexpected shape
+          resolve(fallbackReply);
+        }
+      })
+      .catch(() => resolve(fallbackReply));
   }, []);
 
   return (
@@ -91,7 +187,7 @@ export function ChatWidget() {
                     m.role === "user"
                       ? "rounded-br-md bg-brand-700 text-white"
                       : "rounded-bl-md bg-white text-slate-700 shadow-sm ring-1 ring-slate-200"
-                  }`}
+                  }${m.pending ? " animate-pulse text-slate-400" : ""}`}
                 >
                   <p>{m.text}</p>
                   {m.links && m.links.length > 0 && (
@@ -154,7 +250,7 @@ export function ChatWidget() {
               <button
                 type="submit"
                 aria-label="Send message"
-                disabled={!input.trim()}
+                disabled={!input.trim() || busy}
                 className="shrink-0 rounded-full bg-brand-700 p-2.5 text-white transition hover:bg-brand-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Send className="h-4 w-4" aria-hidden="true" />

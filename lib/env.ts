@@ -23,6 +23,10 @@ const envSchema = z.object({
   EMAIL_FROM_ADDRESS: z.string().email().optional(),
   RESEND_API_KEY: z.string().min(1).optional(),
   SEED_CONFIRM: z.string().optional(),
+  // Optional: enables AI answers for off-topic chat questions (lib/chatbot/ai.ts).
+  // Read directly from process.env there too, so absence never breaks boot.
+  GROQ_API_KEY: z.string().min(1).optional(),
+  GROQ_MODEL: z.string().min(1).optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
