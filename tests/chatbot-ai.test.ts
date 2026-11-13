@@ -123,6 +123,9 @@ describe("askGroq (stubbed fetch)", () => {
   beforeEach(() => {
     process.env.GROQ_API_KEY = "test-key-not-real";
     delete process.env.GROQ_MODEL;
+    // Failed attempts log their failure class server-side; keep test
+    // output clean.
+    vi.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -203,6 +206,81 @@ describe("askGroq (stubbed fetch)", () => {
     await askGroq("hello");
     const [, init] = fn.mock.calls[0] as unknown as [string, RequestInit];
     expect(JSON.parse(init.body as string).model).toBe("llama-3.1-8b-instant");
+  });
+
+  it("retries with the fast model when the primary returns HTTP 500", async () => {
+    let call = 0;
+    const fn = stubFetch(async () => {
+      call += 1;
+      return call === 1
+        ? { ok: false, status: 500, json: async () => ({}) }
+        : okResponse("Answer from the fast model.");
+    });
+    const result = await askGroq("What is the capital of France?");
+    expect(result).toEqual({
+      type: "answer",
+      text: "Answer from the fast model.",
+    });
+    expect(fn).toHaveBeenCalledTimes(2);
+    const models = fn.mock.calls.map(
+      (c) =>
+        (JSON.parse((c[1] as RequestInit).body as string) as { model: string })
+          .model,
+    );
+    expect(models).toEqual(["llama-3.3-70b-versatile", "llama-3.1-8b-instant"]);
+  });
+
+  it("retries with the fast model when the primary attempt times out", async () => {
+    let call = 0;
+    const fn = stubFetch(async () => {
+      call += 1;
+      if (call === 1) {
+        const err = new Error("The operation was aborted");
+        err.name = "AbortError";
+        throw err;
+      }
+      return okResponse("Fast answer after the timeout.");
+    });
+    const result = await askGroq("hello");
+    expect(result).toEqual({
+      type: "answer",
+      text: "Fast answer after the timeout.",
+    });
+    expect(fn).toHaveBeenCalledTimes(2);
+    const secondInit = fn.mock.calls[1]![1] as RequestInit;
+    expect(JSON.parse(secondInit.body as string).model).toBe(
+      "llama-3.1-8b-instant",
+    );
+  });
+
+  it("does not retry when the primary succeeds", async () => {
+    const fn = stubFetch(async () => okResponse("One-shot answer."));
+    expect(await askGroq("hello")).toEqual({
+      type: "answer",
+      text: "One-shot answer.",
+    });
+    expect(fn).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not retry on a handover from the primary", async () => {
+    const fn = stubFetch(async () => okResponse("[[HANDOVER]]"));
+    expect(await askGroq("Why was my application rejected?")).toEqual({
+      type: "handover",
+    });
+    expect(fn).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not swap models on failure when GROQ_MODEL is set", async () => {
+    process.env.GROQ_MODEL = "custom-model-1";
+    const fn = stubFetch(async () => ({
+      ok: false,
+      status: 500,
+      json: async () => ({}),
+    }));
+    expect(await askGroq("hello")).toEqual({ type: "unavailable" });
+    expect(fn).toHaveBeenCalledTimes(1);
+    const [, init] = fn.mock.calls[0] as unknown as [string, RequestInit];
+    expect(JSON.parse(init.body as string).model).toBe("custom-model-1");
   });
 });
 

@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { askGroq, type ChatHistoryTurn } from "@/lib/chatbot/ai";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
+// Allow up to 60s: a slow primary Groq call plus one retry must not be
+// cut off by the platform's default function limit.
+export const maxDuration = 60;
+
 /**
  * POST /api/chat — Groq AI fallback for the TalentBridge Assistant.
  *

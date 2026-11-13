@@ -128,22 +128,21 @@ export function parseGroqAnswer(raw: string): GroqResult {
 }
 
 const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
-const GROQ_TIMEOUT_MS = 10_000;
+const GROQ_TIMEOUT_MS = 30_000;
+const GROQ_PRIMARY_MODEL = "llama-3.3-70b-versatile";
+const GROQ_FALLBACK_MODEL = "llama-3.1-8b-instant";
 
 /**
- * Ask Groq to answer an off-topic question. SERVER ONLY: reads the API key
- * from the environment at call time and never exposes it (the key is a
- * non-public env var, so it is never inlined into client bundles). Returns
- * "unavailable" for a missing key, any HTTP error, a timeout, or a
- * malformed response — the caller then falls back gracefully.
+ * One Groq attempt with one model. Failures are logged server-side with
+ * their class only (HTTP status, error name, or "malformed response") —
+ * never the API key, the request body, or the visitor's message.
  */
-export async function askGroq(
+async function attemptGroq(
+  apiKey: string,
+  model: string,
   message: string,
-  history: ChatHistoryTurn[] = [],
+  history: ChatHistoryTurn[],
 ): Promise<GroqResult> {
-  const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) return { type: "unavailable" };
-
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), GROQ_TIMEOUT_MS);
   try {
@@ -155,24 +154,62 @@ export async function askGroq(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: process.env.GROQ_MODEL || "llama-3.3-70b-versatile",
+        model,
         messages: buildGroqMessages(message, history),
-        max_tokens: 450,
+        max_tokens: 320,
         temperature: 0.4,
       }),
     });
-    if (!res.ok) return { type: "unavailable" };
+    if (!res.ok) {
+      console.error(`[chat-ai] Groq request failed (${model}): HTTP ${res.status}`);
+      return { type: "unavailable" };
+    }
     const data: unknown = await res.json();
     const content = (
       data as {
         choices?: { message?: { content?: unknown } }[];
       } | null
     )?.choices?.[0]?.message?.content;
-    if (typeof content !== "string") return { type: "unavailable" };
+    if (typeof content !== "string") {
+      console.error(`[chat-ai] Groq request failed (${model}): malformed response`);
+      return { type: "unavailable" };
+    }
     return parseGroqAnswer(content);
-  } catch {
+  } catch (err) {
+    const name = (err as { name?: string } | null)?.name ?? "UnknownError";
+    console.error(`[chat-ai] Groq request failed (${model}): ${name}`);
     return { type: "unavailable" };
   } finally {
     clearTimeout(timer);
   }
+}
+
+/**
+ * Ask Groq to answer an off-topic question. SERVER ONLY: reads the API key
+ * from the environment at call time and never exposes it (the key is a
+ * non-public env var, so it is never inlined into client bundles). Returns
+ * "unavailable" for a missing key, any HTTP error, a timeout, or a
+ * malformed response — the caller then falls back gracefully.
+ *
+ * If the primary model fails and no GROQ_MODEL override is configured,
+ * one retry is made with the faster 8b model. An explicit GROQ_MODEL is
+ * respected as-is: a failure there is NOT retried on a different model.
+ * An answer or handover from any attempt is returned immediately.
+ */
+export async function askGroq(
+  message: string,
+  history: ChatHistoryTurn[] = [],
+): Promise<GroqResult> {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) return { type: "unavailable" };
+
+  const override = process.env.GROQ_MODEL;
+  const first = await attemptGroq(
+    apiKey,
+    override || GROQ_PRIMARY_MODEL,
+    message,
+    history,
+  );
+  if (first.type !== "unavailable" || override) return first;
+  return attemptGroq(apiKey, GROQ_FALLBACK_MODEL, message, history);
 }
