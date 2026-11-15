@@ -70,7 +70,13 @@ export async function setJobStatus(payload: Record<string, string>): Promise<Act
     if (!job) return { ok: false, error: "Job not found." };
 
     const update: Record<string, unknown> = { status };
-    if (status === "published") update.published_at = new Date().toISOString();
+    if (status === "published") {
+      // Publishing is employer activity: stamp it at the same instant as
+      // published_at so the auto-pause rule never treats a fresh post as
+      // stale (see migration 0017).
+      update.published_at = new Date().toISOString();
+      update.last_employer_activity_at = update.published_at;
+    }
     const { error: uErr } = await admin.from("jobs").update(update).eq("id", jobId);
     if (uErr) throw new Error(uErr.message);
     await writeAudit({

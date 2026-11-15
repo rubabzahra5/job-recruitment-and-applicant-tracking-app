@@ -2,7 +2,8 @@
  * Application response rule — "5–7 business days" (H-response-rule).
  *
  * TalentBridge's promise to candidates: every application gets a company
- * response within 7 business days (Mon–Fri, Asia/Karachi). A "response" is
+ * response within 7 business days (Mon–Fri, excluding Pakistan public
+ * holidays, Asia/Karachi). A "response" is
  * the application first moving beyond the `applied` stage — In review,
  * moved forward (Accepted) or Rejected all count. Day 5 is the reminder
  * point. If the deadline passes with no response:
@@ -18,6 +19,8 @@
  * be shared by server pages and the response-rate helper in
  * lib/responsiveness.ts.
  */
+
+import { isPakistanHoliday } from "@/lib/pakistan-holidays";
 
 export const RESPONSE_DEADLINE_BUSINESS_DAYS = 7;
 export const RESPONSE_REMINDER_BUSINESS_DAYS = 5;
@@ -46,7 +49,10 @@ function karachiDateMs(instant: Date): number {
 
 function isBusinessDateMs(dateMs: number): boolean {
   const dow = new Date(dateMs).getUTCDay(); // calendar day is stored as UTC midnight
-  return dow >= 1 && dow <= 5; // Mon–Fri
+  // Mon–Fri, and not a Pakistan public holiday (Eid, Ashura, national
+  // days…) — a company cannot be marked "No response" for days the
+  // whole country was on holiday. See lib/pakistan-holidays.ts.
+  return dow >= 1 && dow <= 5 && !isPakistanHoliday(dateMs);
 }
 
 /** End of a Karachi calendar day (23:59:59.999 +05:00) as an instant. */
@@ -55,10 +61,11 @@ function endOfKarachiDayMs(dateMs: number): number {
 }
 
 /**
- * Add `businessDays` business days (Mon–Fri) to the Karachi calendar date
- * of `from`, returning the END of the resulting Karachi day. The starting
- * day itself is never counted, so e.g. a Monday submission + 7 business
- * days lands at the end of the following Wednesday.
+ * Add `businessDays` business days (Mon–Fri, excluding Pakistan public
+ * holidays) to the Karachi calendar date of `from`, returning the END of
+ * the resulting Karachi day. The starting day itself is never counted,
+ * so e.g. a Monday submission + 7 business days lands at the end of the
+ * following Wednesday (later when holidays fall inside the window).
  */
 export function addBusinessDaysKarachi(from: Date, businessDays: number): Date {
   let cur = karachiDateMs(from);

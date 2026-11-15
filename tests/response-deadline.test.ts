@@ -8,6 +8,7 @@ import {
   getResponseDeadline,
   getResponseReminderAt,
 } from "@/lib/response-deadline";
+import { isPakistanHoliday } from "@/lib/pakistan-holidays";
 
 // Calendar anchors (Asia/Karachi): Mon 2026-10-05, Fri 2026-10-02,
 // Sat 2026-10-03, Sun 2026-10-04 (2026-11-09 is a Monday).
@@ -222,5 +223,108 @@ describe("computeOrgResponseRate", () => {
 
   it("returns a null rate with no applications", () => {
     expect(computeOrgResponseRate([]).responseRate).toBeNull();
+  });
+});
+
+// ─── Pakistan public holidays ───────────────────────────────────────────────
+// A business day is Mon–Fri AND not a public holiday (lib/pakistan-holidays).
+// Dates used below: Eid ul-Fitr 2025 Mon 31 Mar – Wed 2 Apr; 2026 —
+// Eid ul-Fitr Fri 20 – Sun 22 Mar, Pakistan Day Mon 23 Mar, Eid ul-Adha
+// Wed 27 – Fri 29 May, Ashura Thu 25 – Fri 26 Jun, Independence Day
+// Fri 14 Aug. (Islamic dates are the expected ones and may shift ±1 day
+// with the official moon sighting.)
+
+describe("Pakistan public holidays in the response rule", () => {
+  it("recognises listed holidays and ordinary days", () => {
+    expect(isPakistanHoliday(Date.UTC(2026, 2, 20))).toBe(true); // Eid ul-Fitr
+    expect(isPakistanHoliday(Date.UTC(2026, 5, 25))).toBe(true); // Ashura
+    expect(isPakistanHoliday(Date.UTC(2026, 7, 14))).toBe(true); // Independence Day
+    expect(isPakistanHoliday(Date.UTC(2026, 2, 16))).toBe(false); // ordinary Monday
+    // 14 Oct 2026 is NOT a holiday — the October windows used by the
+    // original tests above are unaffected by the holiday calendar.
+    expect(isPakistanHoliday(Date.UTC(2026, 9, 14))).toBe(false);
+  });
+
+  it("extends the deadline by exactly the Eid ul-Fitr weekdays in the window", () => {
+    // Eid ul-Fitr 2025 fell Mon 31 Mar – Wed 2 Apr (all weekdays).
+    // Submitted Wed 26 Mar 2025. Business days: Thu27 Fri28,
+    // Mon31–Wed2 = Eid (skipped), Thu3 Fri4, Mon7 (reminder),
+    // Tue8 Wed9 (deadline). Mon–Fri-only counting would land on
+    // Fri 4 Apr; the deadline moves by exactly the 3 Eid weekdays.
+    expect(getResponseDeadline("2025-03-26T09:00:00+05:00").toISOString()).toBe(
+      "2025-04-09T18:59:59.999Z",
+    );
+    // The day-5 reminder shifts the same way (Mon 7 Apr, not Wed 2 Apr).
+    expect(getResponseReminderAt("2025-03-26T09:00:00+05:00").toISOString()).toBe(
+      "2025-04-07T18:59:59.999Z",
+    );
+  });
+
+  it("stacks holidays that fall together (Eid ul-Fitr + Pakistan Day, 2026)", () => {
+    // Submitted Mon 16 Mar 2026. Business days: Tue17 Wed18 Thu19,
+    // Fri20 = Eid ul-Fitr (skipped), Mon23 = Pakistan Day (skipped),
+    // Tue24 Wed25 (reminder) Thu26 Fri27 (deadline).
+    expect(getResponseDeadline("2026-03-16T09:00:00+05:00").toISOString()).toBe(
+      "2026-03-27T18:59:59.999Z",
+    );
+    expect(getResponseReminderAt("2026-03-16T09:00:00+05:00").toISOString()).toBe(
+      "2026-03-25T18:59:59.999Z",
+    );
+  });
+
+  it("does not mark an employer 'No response' on the holiday-extended deadline day", () => {
+    const s = deriveResponseStatus(
+      { stage: "applied", submitted_at: "2026-03-16T09:00:00+05:00" },
+      new Date("2026-03-27T12:00:00+05:00"),
+    );
+    expect(s.kind).toBe("due-soon");
+    expect(s.businessDaysLeft).toBe(0);
+  });
+
+  it("skips both Ashura weekdays", () => {
+    // Submitted Mon 22 Jun 2026. Business days: Tue23 Wed24,
+    // Thu25–Fri26 = Ashura (skipped), Mon29 Tue30 Wed1 Thu2 Fri3.
+    expect(getResponseDeadline("2026-06-22T09:00:00+05:00").toISOString()).toBe(
+      "2026-07-03T18:59:59.999Z",
+    );
+    expect(getResponseReminderAt("2026-06-22T09:00:00+05:00").toISOString()).toBe(
+      "2026-07-01T18:59:59.999Z",
+    );
+    expect(
+      businessDaysBetweenKarachi(
+        new Date("2026-06-22T09:00:00+05:00"),
+        new Date("2026-07-03T12:00:00+05:00"),
+      ),
+    ).toBe(7);
+  });
+
+  it("skips a fixed holiday that falls on a weekday (Independence Day)", () => {
+    // Submitted Mon 10 Aug 2026. Business days: Tue11 Wed12 Thu13,
+    // Fri14 = Independence Day (skipped), Mon17 Tue18 Wed19 Thu20.
+    expect(getResponseDeadline("2026-08-10T09:00:00+05:00").toISOString()).toBe(
+      "2026-08-20T18:59:59.999Z",
+    );
+  });
+
+  it("changes nothing when a fixed holiday falls on a weekend", () => {
+    // 14 Aug 2027 is a Saturday (and Eid Milad-un-Nabi 2027 falls on
+    // Sunday 15 Aug), so Mon 9 Aug 2027 + 7 business days is exactly
+    // the Mon–Fri-only result: end of Wed 18 Aug 2027.
+    expect(getResponseDeadline("2027-08-09T09:00:00+05:00").toISOString()).toBe(
+      "2027-08-18T18:59:59.999Z",
+    );
+  });
+
+  it("counts a holiday-plus-weekend long stretch correctly (Eid ul-Adha 2026)", () => {
+    // Submitted Mon 25 May 2026. Eid ul-Adha Wed27–Fri29 runs into the
+    // weekend (Sat30–Sun31): five consecutive non-business days.
+    // Business days: Tue26, Mon1 Jun, Tue2, Wed3, Thu4 (reminder),
+    // Fri5, Mon8 (deadline).
+    expect(getResponseDeadline("2026-05-25T09:00:00+05:00").toISOString()).toBe(
+      "2026-06-08T18:59:59.999Z",
+    );
+    expect(getResponseReminderAt("2026-05-25T09:00:00+05:00").toISOString()).toBe(
+      "2026-06-04T18:59:59.999Z",
+    );
   });
 });

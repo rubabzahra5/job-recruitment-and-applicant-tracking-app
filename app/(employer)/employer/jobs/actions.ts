@@ -246,7 +246,13 @@ export async function transitionJob(
     }
 
     const update: Record<string, unknown> = { status: to };
-    if (to === "published") update.published_at = new Date().toISOString();
+    if (to === "published") {
+      // Publishing is employer activity: stamp it at the same instant as
+      // published_at so the auto-pause rule never treats a fresh post as
+      // stale (see migration 0017).
+      update.published_at = new Date().toISOString();
+      update.last_employer_activity_at = update.published_at;
+    }
 
     const { error } = await admin.from("jobs").update(update).eq("id", jobId).eq("org_id", orgId);
     if (error) throw new Error(`Failed to update job status: ${error.message}`);
