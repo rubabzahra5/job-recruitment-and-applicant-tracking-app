@@ -2,24 +2,31 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireSessionUser } from "@/lib/auth";
 import { parseCV } from "@/lib/cv-parser";
-
-const MAX_SIZE = 5 * 1024 * 1024; // 5MB
-const ALLOWED_TYPES = [
-  "application/pdf",
-  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  "text/plain",
-  "application/msword", // .doc (will warn, not parse)
-];
+import { validateDocUpload, MAX_CV_BYTES } from "@/lib/uploads";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 /**
  * Upload a CV and auto-extract data for profile auto-fill.
- * 
- * Accepts: PDF, DOCX, TXT (and .doc with a warning).
+ *
+ * Accepts: PDF and DOCX only, validated by content (magic bytes) via
+ * lib/uploads.ts — the same validation the resume action uses (SEC-09).
+ * The client-supplied MIME type is never trusted; the sniffed type is
+ * what gets stored. Rate-limited per candidate (SEC-09).
  * Returns parsed data (name, email, phone, skills, experience).
  */
 export async function POST(request: Request) {
   try {
     const user = await requireSessionUser();
+
+    // Rate limit per signed-in candidate: 10 uploads/hour.
+    const { allowed } = await checkRateLimit("cv_upload", user.id, 10, 3600);
+    if (!allowed) {
+      return NextResponse.json(
+        { ok: false, error: "Too many uploads. Please try again later." },
+        { status: 429 },
+      );
+    }
+
     const admin = createAdminClient();
 
     const formData = await request.formData();
@@ -29,17 +36,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "No file uploaded." }, { status: 400 });
     }
 
-    if (file.size > MAX_SIZE) {
+    // Validate size, extension and magic bytes (PDF/DOCX only) — the
+    // file's head bytes decide, exactly as in the resume action.
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const validation = validateDocUpload({
+      fileName: file.name,
+      sizeBytes: file.size,
+      headBytes: buffer.subarray(0, 4096),
+      maxBytes: MAX_CV_BYTES,
+    });
+    if (!validation.ok || !validation.mime) {
       return NextResponse.json(
-        { ok: false, error: "File too large. Maximum 5MB." },
-        { status: 400 }
-      );
-    }
-
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      return NextResponse.json(
-        { ok: false, error: "Please upload a PDF, DOCX, or TXT file." },
-        { status: 400 }
+        { ok: false, error: validation.error ?? "Please upload a PDF or DOCX file." },
+        { status: 400 },
       );
     }
 
@@ -58,7 +67,6 @@ export async function POST(request: Request) {
     }
 
     // Parse the CV.
-    const buffer = Buffer.from(await file.arrayBuffer());
     const parsed = await parseCV(buffer, file.name);
 
     // Upload to storage (cvs bucket).
@@ -69,13 +77,15 @@ export async function POST(request: Request) {
     const { error: uploadError } = await admin.storage
       .from("cvs")
       .upload(storagePath, buffer, {
-        contentType: file.type,
+        contentType: validation.mime,
         upsert: false,
       });
 
     if (uploadError) {
+      // SEC-12: log the detail server-side; generic message to the client.
+      console.error("[cv-upload] Storage upload failed:", uploadError.message);
       return NextResponse.json(
-        { ok: false, error: `Upload failed: ${uploadError.message}` },
+        { ok: false, error: "Upload failed. Please try again." },
         { status: 500 }
       );
     }
@@ -94,7 +104,7 @@ export async function POST(request: Request) {
         kind: "cv",
         file_path: storagePath,
         file_name: file.name,
-        mime_type: file.type,
+        mime_type: validation.mime,
         file_size: file.size,
         is_current_cv: true,
       })
@@ -104,7 +114,12 @@ export async function POST(request: Request) {
     if (docError) {
       // Clean up uploaded file.
       await admin.storage.from("cvs").remove([storagePath]);
-      throw new Error(docError.message);
+      // SEC-12: log the detail server-side; generic message to the client.
+      console.error("[cv-upload] Failed to save CV record:", docError.message);
+      return NextResponse.json(
+        { ok: false, error: "Upload failed. Please try again." },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({
@@ -120,8 +135,12 @@ export async function POST(request: Request) {
       },
     });
   } catch (e) {
-    const message = e instanceof Error ? e.message : "Upload failed.";
-    return NextResponse.json({ ok: false, error: message }, { status: 500 });
+    // SEC-12: log the detail server-side; generic message to the client.
+    console.error("[cv-upload] Upload failed:", e instanceof Error ? e.message : e);
+    return NextResponse.json(
+      { ok: false, error: "Upload failed. Please try again." },
+      { status: 500 }
+    );
   }
 }
 

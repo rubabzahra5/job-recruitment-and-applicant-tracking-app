@@ -1,10 +1,12 @@
 "use server";
 
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { getEnv } from "@/lib/env";
 import { normalizePhone } from "@/lib/phone";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getDashboardPath, safeNextPath } from "../_lib/dashboard";
@@ -46,6 +48,17 @@ export async function registerAction(input: unknown): Promise<RegisterResult> {
       ok: false,
       error: "Please fix the highlighted fields and try again.",
       fieldErrors: { phone: phoneCheck.error ?? "Enter a valid phone number." },
+    };
+  }
+
+  // SECURITY (SEC-10): Rate limit registrations per IP (5/hour) to
+  // blunt scripted mass sign-ups.
+  const ip = getClientIp(await headers());
+  const { allowed, retryAfterSec } = await checkRateLimit("register", ip, 5, 3600);
+  if (!allowed) {
+    return {
+      ok: false,
+      error: `Too many registration attempts. Please try again in ${retryAfterSec} seconds.`,
     };
   }
 

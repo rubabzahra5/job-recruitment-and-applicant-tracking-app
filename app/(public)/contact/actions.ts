@@ -1,7 +1,9 @@
 "use server";
 
+import { headers } from "next/headers";
 import { z } from "zod";
 
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { createNotification } from "@/lib/notifications";
@@ -31,6 +33,18 @@ export async function submitContactMessage(input: unknown): Promise<ContactResul
       if (!(key in fieldErrors)) fieldErrors[key] = issue.message;
     }
     return { ok: false, error: "Please fix the highlighted fields and try again.", fieldErrors };
+  }
+
+  // SECURITY (SEC-10): Rate limit submissions per IP (5/hour) — every
+  // message also notifies every super admin, so spam here floods the
+  // admin notification feed as well as the database.
+  const ip = getClientIp(await headers());
+  const { allowed, retryAfterSec } = await checkRateLimit("contact", ip, 5, 3600);
+  if (!allowed) {
+    return {
+      ok: false,
+      error: `Too many messages. Please try again in ${retryAfterSec} seconds.`,
+    };
   }
 
   const supabase = await createClient();

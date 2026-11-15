@@ -50,7 +50,14 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true, id: org.id });
   } catch (e) {
-    const message = e instanceof Error ? e.message : "Create failed.";
-    return NextResponse.json({ ok: false, error: message }, { status: 400 });
+    // SEC-12: log the detail server-side; generic message to the client.
+    console.error(
+      "[admin/organizations] Create failed:",
+      e instanceof Error ? e.message : e,
+    );
+    return NextResponse.json(
+      { ok: false, error: "Could not create the organization. Please check the details and try again." },
+      { status: 400 },
+    );
   }
 }

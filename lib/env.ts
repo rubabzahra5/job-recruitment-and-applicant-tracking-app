@@ -27,6 +27,11 @@ const envSchema = z.object({
   // Read directly from process.env there too, so absence never breaks boot.
   GROQ_API_KEY: z.string().min(1).optional(),
   GROQ_MODEL: z.string().min(1).optional(),
+  // Optional in the schema on purpose (environments that never run cron
+  // must still boot), but the cron route FAILS CLOSED without it
+  // (SEC-05): app/api/cron/auto-pause returns 500 and runs nothing when
+  // CRON_SECRET is unset. Vercel Cron sends it as a Bearer token.
+  CRON_SECRET: z.string().min(1).optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

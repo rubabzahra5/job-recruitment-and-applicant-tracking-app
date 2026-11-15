@@ -54,4 +54,13 @@ describe("migration 0017 — auto_pause_stale_jobs fairness", () => {
     expect(sql).toMatch(/status\s*=\s*'published'/i);
     expect(sql).toMatch(/set status = 'paused'/i);
   });
+
+  it("SEC-04: revokes public execute so the function is not anonymously callable via RPC", () => {
+    expect(sql).toMatch(
+      /revoke execute on function public\.auto_pause_stale_jobs\(int\) from public, anon, authenticated/i,
+    );
+    expect(sql).toMatch(
+      /grant execute on function public\.auto_pause_stale_jobs\(int\) to service_role/i,
+    );
+  });
 });

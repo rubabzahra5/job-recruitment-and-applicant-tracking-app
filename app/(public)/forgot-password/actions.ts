@@ -1,8 +1,10 @@
 "use server";
 
+import { headers } from "next/headers";
 import { z } from "zod";
 
 import { getEnv } from "@/lib/env";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { createClient } from "@/lib/supabase/server";
 
 const schema = z.object({
@@ -19,6 +21,22 @@ export async function requestPasswordReset(
   const parsed = schema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: "Enter a valid email address." };
+  }
+
+  // SECURITY (SEC-10): Rate limit reset requests per IP and per email
+  // (3/hour each) so a victim's inbox cannot be flooded. A limited
+  // request returns the SAME success response as a real one — the
+  // limit must never reveal whether the email is registered.
+  const ip = getClientIp(await headers());
+  const byIp = await checkRateLimit("password_reset", ip, 3, 3600);
+  const byEmail = await checkRateLimit(
+    "password_reset",
+    `email:${parsed.data.email.toLowerCase()}`,
+    3,
+    3600,
+  );
+  if (!byIp.allowed || !byEmail.allowed) {
+    return { ok: true };
   }
 
   let redirectTo: string | undefined;

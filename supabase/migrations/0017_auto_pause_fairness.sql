@@ -44,3 +44,15 @@ $$;
 
 comment on function public.auto_pause_stale_jobs(int) is
   'Auto-pauses published jobs whose effective employer activity (last recorded activity, else publish date, else creation date) is older than N days (ghost-job prevention).';
+
+-- ─── SEC-04 (security review 2026-11-15): lock down EXECUTE ──────────
+-- This function is SECURITY DEFINER and PostgreSQL grants EXECUTE to
+-- PUBLIC by default, which Supabase exposes as an RPC endpoint: anyone
+-- holding the public anon key could call it directly — bypassing the
+-- cron route's CRON_SECRET check — and, with inactivity_days = 0, pause
+-- essentially every published job in one unauthenticated request.
+-- The only legitimate callers are the cron route and the control center,
+-- and both call through the service role, so execute is revoked from
+-- everyone else and granted to service_role only.
+revoke execute on function public.auto_pause_stale_jobs(int) from public, anon, authenticated;
+grant execute on function public.auto_pause_stale_jobs(int) to service_role;

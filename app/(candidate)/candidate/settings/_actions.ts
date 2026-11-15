@@ -85,6 +85,29 @@ export async function changeEmail(input: { email: string }): Promise<ActionResul
     const supabase = await createClient();
     const { error } = await supabase.auth.updateUser({ email: parsed.data.email });
     if (error) throw new Error(error.message);
+
+    // SEC-06: profiles.email must follow the AUTH email — it is
+    // server-controlled now (migration 0018 pins it against user-client
+    // writes), so sync it here through the service role. If Supabase's
+    // secure email change is on, the change completes only when the
+    // confirmation link is clicked and the auth email still reads as
+    // the old one here — then no sync happens, and the profile keeps
+    // the old, still-valid address instead of claiming the new one
+    // early. Best-effort: never fail the email change over the sync.
+    try {
+      const {
+        data: { user: freshUser },
+      } = await supabase.auth.getUser();
+      const authEmail = freshUser?.email ?? null;
+      if (authEmail && authEmail.toLowerCase() !== (user.email ?? "").toLowerCase()) {
+        const admin = createAdminClient();
+        await admin.from("profiles").update({ email: authEmail }).eq("id", user.id);
+      }
+    } catch {
+      // Auth remains the source of truth; a stale profile copy is
+      // repaired on the next successful sync.
+    }
+
     revalidatePath("/candidate/settings");
     return { ok: true };
   } catch (err) {

@@ -10,8 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { FormField } from "@/components/ui/FormField";
 import { Input } from "@/components/ui/Input";
-import { createClient } from "@/lib/supabase/client";
-import { verifyAdminLogin } from "./actions";
+import { adminLoginAction } from "./actions";
 
 const schema = z.object({
   email: z.string().trim().email("Enter a valid email address."),
@@ -23,9 +22,10 @@ type FormValues = z.infer<typeof schema>;
 /**
  * Dedicated Control Center sign-in.
  *
- * Credentials go through Supabase Auth (anon key, client-side). The session
- * is then verified SERVER-SIDE as a super_admin; anything else is signed out
- * and rejected with one generic message — no distinction between wrong
+ * Credentials go through a server action (SEC-03) that rate-limits by
+ * IP BEFORE attempting the password sign-in, then verifies the session
+ * SERVER-SIDE as a super_admin; anything else is signed out and
+ * rejected with one generic message — no distinction between wrong
  * credentials and a non-admin account, and no org internals are exposed.
  */
 export function AdminLoginForm() {
@@ -39,16 +39,10 @@ export function AdminLoginForm() {
 
   async function onSubmit(values: FormValues) {
     setFormError(null);
-    const supabase = createClient();
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    const result = await adminLoginAction({
       email: values.email,
       password: values.password,
     });
-    if (signInError) {
-      setFormError("Invalid email or password, or unauthorized account.");
-      return;
-    }
-    const result = await verifyAdminLogin();
     if (result.ok) {
       router.push("/control-center");
       router.refresh();

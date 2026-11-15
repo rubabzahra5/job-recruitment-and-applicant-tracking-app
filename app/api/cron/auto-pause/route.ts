@@ -4,16 +4,23 @@ import { createAdminClient } from "@/lib/supabase/admin";
 /**
  * Cron job: auto-pause stale jobs (ghost-job prevention).
  * Runs daily via Vercel Cron (see vercel.json).
- * 
+ *
  * Security: requires CRON_SECRET bearer token (set in Vercel env vars).
+ * SEC-05: the route FAILS CLOSED — when CRON_SECRET is not configured
+ * it returns 500 and runs nothing, instead of silently skipping the
+ * check and running for anyone who asks.
  * Pakistan-first: skipped entirely when disruption_mode is active.
  */
 export async function GET(request: Request) {
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) {
+    console.error("[cron/auto-pause] CRON_SECRET is not configured; refusing to run.");
+    return NextResponse.json({ error: "Cron is not configured." }, { status: 500 });
+  }
+
   // Verify cron secret (Vercel sends this automatically, but we check manually for safety).
   const authHeader = request.headers.get("authorization");
-  const cronSecret = process.env.CRON_SECRET;
-  
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  if (authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -39,8 +46,9 @@ export async function GET(request: Request) {
   });
 
   if (error) {
+    // SEC-12: detail stays in the server log; the client gets a generic message.
     console.error("[cron/auto-pause] Failed:", error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "Auto-pause failed." }, { status: 500 });
   }
 
   const paused = (data ?? []) as Array<{ job_id: string; job_title: string }>;
