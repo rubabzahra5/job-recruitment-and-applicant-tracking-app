@@ -276,6 +276,10 @@ export default async function EmployerDashboardPage({
             className="font-semibold underline"
           >
             Review them now
+          </Link>{" "}
+          · Already responded off-platform, or think a mark is wrong?{" "}
+          <Link href="/scam-policy#no-response-appeals" className="font-semibold underline">
+            How to appeal
           </Link>
         </Alert>
       )}

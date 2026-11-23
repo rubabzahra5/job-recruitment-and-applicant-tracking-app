@@ -17,6 +17,8 @@ const COMPANY_LINKS = [
   { href: "/faq", label: "FAQ" },
   { href: "/privacy", label: "Privacy policy" },
   { href: "/terms", label: "Terms of use" },
+  { href: "/scam-policy", label: "Scam policy" },
+  { href: "/report-scam", label: "Report a scam" },
 ];
 
 export function SiteFooter() {

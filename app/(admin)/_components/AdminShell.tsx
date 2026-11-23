@@ -37,6 +37,7 @@ const NAV: { href: string; label: string; icon: React.ReactNode; section?: strin
   { href: "/control-center/approvals", label: "Approvals", icon: <IconCheck /> },
   { href: "/control-center/reports", label: "Reports", icon: <IconChart /> },
   { href: "/control-center/audit-logs", label: "Audit Logs", icon: <IconList /> },
+  { href: "/control-center/scam-reports", label: "Scam Reports", icon: <IconShield /> },
   { href: "/control-center/notifications", label: "Notifications", icon: <IconBell /> },
   { href: "/control-center/organizations", label: "Organizations", icon: <IconBuilding />, section: "Manage" },
   { href: "/control-center/users", label: "Users", icon: <IconUsers /> },
